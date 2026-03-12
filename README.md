@@ -1,5 +1,5 @@
 # EXAM-MASTER
-# dev_2.0 分支发布第一个预览版！专为适配移动端触摸体验，采用基于Flutter开发的web/iOS/Android客户端，可以通过 https://exam.shaynechen.tech/app-web 进行体验，拥有更丰富的题库（包括多媒体）和更好的UI，交互体验，main分支不会再维护。
+# dev_2.0 分支发布第一个预览版！专为适配移动端触摸体验，采用基于Flutter开发的web/iOS/Android客户端，拥有更丰富的题库（包括多媒体）和更好的UI，交互体验，main分支不会再维护。
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Flask](https://img.shields.io/badge/Flask-2.0+-green.svg)
 ![Python](https://img.shields.io/badge/Python-3.6+-blue.svg)
@@ -167,6 +167,7 @@
 ---
 
 欢迎提交Issue或Pull Request，共同完善本系统！
+
 
 
 
