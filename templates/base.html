@@ -241,8 +241,8 @@
                 }
             }
             
-            // Flash消息自动消失
-            const alerts = document.querySelectorAll('.alert');
+            // Flash消息自动消失（跳过带 no-auto-dismiss 的元素）
+            const alerts = document.querySelectorAll('.alert:not(.no-auto-dismiss)');
             alerts.forEach(alert => {
                 setTimeout(() => {
                     alert.style.opacity = '0';
