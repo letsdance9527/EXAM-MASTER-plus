@@ -23,6 +23,7 @@ fun HomeScreen(
     viewModel: ExamViewModel
 ) {
     val statistics by viewModel.statistics.collectAsState()
+    val lastBrowsedId by viewModel.lastBrowsedQuestionId.collectAsState()
     
     Column(
         modifier = Modifier
@@ -69,6 +70,35 @@ fun HomeScreen(
             }
         }
         
+        // Sequential position badge
+        if (lastBrowsedId != null) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                )
+            ) {
+                Row(
+                    modifier = Modifier.padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.Bookmark,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                    Text(
+                        text = "顺序答题将从第 $lastBrowsedId 题继续",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+            }
+        }
+
         // Mode Selection Buttons
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(12.dp)

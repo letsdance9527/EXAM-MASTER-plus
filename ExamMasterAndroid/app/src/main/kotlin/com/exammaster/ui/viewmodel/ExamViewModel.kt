@@ -1,13 +1,20 @@
 package com.exammaster.ui.viewmodel
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import android.content.Context
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.exammaster.data.repository.ExamRepository
 import com.exammaster.data.database.entities.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-class ExamViewModel(private val repository: ExamRepository) : ViewModel() {
+class ExamViewModel(
+    application: Application,
+    private val repository: ExamRepository
+) : AndroidViewModel(application) {
+
+    private val prefs = application.getSharedPreferences("exam_prefs", Context.MODE_PRIVATE)
     
     private val _currentQuestion = MutableStateFlow<Question?>(null)
     val currentQuestion: StateFlow<Question?> = _currentQuestion.asStateFlow()
@@ -30,8 +37,17 @@ class ExamViewModel(private val repository: ExamRepository) : ViewModel() {
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
     
-    private val _lastBrowsedQuestionId = MutableStateFlow<String?>(null)
+    // 持久化：从 SharedPreferences 恢复上次浏览位置
+    private val _lastBrowsedQuestionId = MutableStateFlow<String?>(
+        prefs.getString("current_seq_qid", null)
+    )
     val lastBrowsedQuestionId: StateFlow<String?> = _lastBrowsedQuestionId.asStateFlow()
+
+    /** 保存当前浏览位置到 SharedPreferences */
+    private fun savePosition(qid: String?) {
+        _lastBrowsedQuestionId.value = qid
+        prefs.edit().putString("current_seq_qid", qid).apply()
+    }
     
     val allQuestions = repository.getAllQuestions().stateIn(
         scope = viewModelScope,
@@ -63,6 +79,7 @@ class ExamViewModel(private val repository: ExamRepository) : ViewModel() {
             _selectedAnswers.value = emptySet()
             _showResult.value = false
             _currentMode.value = QuizMode.RANDOM
+            question?.let { savePosition(it.id) }
             _isLoading.value = false
         }
     }
@@ -76,6 +93,7 @@ class ExamViewModel(private val repository: ExamRepository) : ViewModel() {
             _selectedAnswers.value = emptySet()
             _showResult.value = false
             _currentMode.value = QuizMode.SEQUENTIAL
+            question?.let { savePosition(it.id) }
             _isLoading.value = false
         }
     }
@@ -89,6 +107,7 @@ class ExamViewModel(private val repository: ExamRepository) : ViewModel() {
             _selectedAnswers.value = emptySet()
             _showResult.value = false
             _currentMode.value = QuizMode.SEQUENTIAL
+            question?.let { savePosition(it.id) }
             _isLoading.value = false
         }
     }
@@ -100,8 +119,7 @@ class ExamViewModel(private val repository: ExamRepository) : ViewModel() {
             _currentQuestion.value = question
             _selectedAnswers.value = emptySet()
             _showResult.value = false
-            // Update last browsed question ID
-            _lastBrowsedQuestionId.value = id
+            savePosition(id)
             _isLoading.value = false
         }
     }
@@ -186,6 +204,7 @@ class ExamViewModel(private val repository: ExamRepository) : ViewModel() {
     fun resetHistory() {
         viewModelScope.launch {
             repository.deleteAllHistory()
+            savePosition(null)  // 清除浏览位置
             loadStatistics()
         }
     }

@@ -43,7 +43,7 @@ class MainActivity : ComponentActivity() {
         
         setContent {
             ExamMasterTheme {
-                val viewModelFactory = ViewModelFactory(repository)
+                val viewModelFactory = ViewModelFactory(application, repository)
                 val viewModel: ExamViewModel = viewModel(factory = viewModelFactory)
                 
                 // Initialize data on first launch
