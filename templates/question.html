@@ -116,42 +116,49 @@
         <!-- 底部操作按钮 -->
         <div class="question-actions">
             {% if review_mode %}
-                <!-- 回顾模式：只显示继续答题按钮 -->
+                <!-- 回顾模式：历史导航按钮 -->
                 <div class="btn-group">
-                    <a href="{{ url_for('index') }}" class="btn btn-outline-primary">
-                        <i class="fas fa-home"></i> 返回首页
-                    </a>
-                    <a href="{{ url_for('random_question') }}" class="btn btn-primary">
-                        <i class="fas fa-arrow-right"></i> 继续答题
-                    </a>
-                </div>
-            {% elif not result_msg %}
-                <!-- 未提交：显示提交按钮 + 上一题按钮 -->
-                <div class="btn-group">
-                    <button type="submit" class="btn btn-success">
-                        <i class="fas fa-paper-plane"></i> 提交答案
-                    </button>
-                    {% if session.get('question_history', [])|length >= 2 %}
-                        {% set prev_qid = session['question_history'][-2] %}
-                        <a href="{{ url_for('review_question', qid=prev_qid) }}" class="btn btn-outline-secondary">
+                    {% if has_prev %}
+                        <a href="{{ url_for('review_question', qid='prev') }}" class="btn btn-outline-secondary">
                             <i class="fas fa-arrow-left"></i> 上一题
                         </a>
                     {% endif %}
+                    {% if has_next %}
+                        <a href="{{ url_for('review_question', qid='next') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-arrow-right"></i> 下一题
+                        </a>
+                    {% endif %}
+                    {% if not has_next %}
+                        <a href="{{ url_for('random_question') }}" class="btn btn-primary">
+                            <i class="fas fa-arrow-right"></i> 继续答题
+                        </a>
+                    {% endif %}
+                </div>
+            {% elif not result_msg %}
+                <!-- 未提交：上一题 + 提交按钮 -->
+                <div class="btn-group">
+                    {% if session.get('question_history', [])|length >= 2 %}
+                        <a href="{{ url_for('review_question', qid='prev') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> 上一题
+                        </a>
+                    {% endif %}
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-paper-plane"></i> 提交答案
+                    </button>
                 </div>
             {% else %}
-                <!-- 已提交：显示导航按钮 + 上一题按钮 -->
+                <!-- 已提交：上一题 + 下一题 -->
                 {% if sequential_mode %}
                     {% if next_qid %}
                         <div class="btn-group">
-                            <a href="{{ url_for('show_sequential_question', qid=next_qid) }}" class="btn btn-primary">
-                                <i class="fas fa-arrow-right"></i> 下一题
-                            </a>
-                            {% if session.get('question_history', [])|length >= 3 %}
-                                {% set prev_qid = session['question_history'][-3] %}
-                                <a href="{{ url_for('review_question', qid=prev_qid) }}" class="btn btn-outline-secondary">
+                            {% if session.get('question_history', [])|length >= 2 %}
+                                <a href="{{ url_for('review_question', qid='prev') }}" class="btn btn-outline-secondary">
                                     <i class="fas fa-arrow-left"></i> 上一题
                                 </a>
                             {% endif %}
+                            <a href="{{ url_for('show_sequential_question', qid=next_qid) }}" class="btn btn-primary">
+                                <i class="fas fa-arrow-right"></i> 下一题
+                            </a>
                         </div>
                     {% else %}
                         <div class="alert alert-success">
@@ -165,11 +172,16 @@
                     {% endif %}
                 {% else %}
                     <div class="btn-group">
-                        <a href="{{ url_for('show_sequential_question', qid=question.id|int + 1) }}" class="btn btn-primary">
-                            <i class="fas fa-arrow-right"></i> 顺序下一题
-                        </a>
+                        {% if session.get('question_history', [])|length >= 2 %}
+                            <a href="{{ url_for('review_question', qid='prev') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> 上一题
+                            </a>
+                        {% endif %}
                         <a href="{{ url_for('random_question') }}" class="btn btn-primary">
                             <i class="fas fa-random"></i> 随机下一题
+                        </a>
+                        <a href="{{ url_for('show_sequential_question', qid=question.id|int + 1) }}" class="btn btn-primary">
+                            <i class="fas fa-arrow-right"></i> 顺序下一题
                         </a>
                         <a href="{{ url_for('sequential_start') }}" class="btn btn-outline-primary">
                             <i class="fas fa-list-ol"></i> 顺序答题模式
@@ -177,12 +189,6 @@
                         <a href="{{ url_for('index') }}" class="btn btn-outline-primary">
                             <i class="fas fa-home"></i> 返回首页
                         </a>
-                        {% if session.get('question_history', [])|length >= 3 %}
-                            {% set prev_qid = session['question_history'][-3] %}
-                            <a href="{{ url_for('review_question', qid=prev_qid) }}" class="btn btn-outline-secondary">
-                                <i class="fas fa-arrow-left"></i> 上一题
-                            </a>
-                        {% endif %}
                     </div>
                 {% endif %}
             {% endif %}

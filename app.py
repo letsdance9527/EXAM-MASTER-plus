@@ -265,34 +265,45 @@ def fetch_question(qid):
 
 
 def push_question_history(qid):
-    """将题目 ID 推入浏览历史栈（session 级别）。"""
+    """将题目 ID 推入浏览历史栈（session 级别），支持历史游标导航。"""
     if 'question_history' not in session:
         session['question_history'] = []
     history = list(session['question_history'])
+    cursor = session.get('history_index', -1)
+    # 如果在浏览历史中（cursor >= 0），丢弃 cursor 之后的历史分支
+    if cursor >= 0 and cursor < len(history) - 1:
+        history = history[:cursor + 1]
+    session['history_index'] = -1  # 回到最新
     # 避免连续重复
     if not history or history[-1] != qid:
         history.append(qid)
-    # 限制最大长度 100
-    if len(history) > 100:
-        history = history[-100:]
+    # 限制最大长度 200
+    if len(history) > 200:
+        history = history[-200:]
     session['question_history'] = history
 
 
-def pop_question_history():
-    """弹出上一个题目 ID，用于「上一题」功能。"""
+def get_history_context():
+    """返回 (history_list, cursor_index)。cursor=-1 表示不在历史浏览模式。"""
     history = list(session.get('question_history', []))
-    if len(history) >= 2:
-        history.pop()          # 移除当前题
-        prev_qid = history.pop()  # 上一题
-        session['question_history'] = history
-        return prev_qid
-    return None
+    cursor = session.get('history_index', -1)
+    return history, cursor
 
 
-def has_previous_question():
-    """检查是否有上一题可回看。"""
-    history = session.get('question_history', [])
-    return len(history) >= 2
+def has_previous_in_history():
+    """检查是否可以向历史更早的方向导航。"""
+    history, cursor = get_history_context()
+    if cursor < 0:
+        return len(history) >= 2
+    return cursor > 0
+
+
+def has_next_in_history():
+    """检查是否可以向历史更新的方向导航。"""
+    history, cursor = get_history_context()
+    if cursor < 0:
+        return False
+    return cursor < len(history) - 1
 
 
 def random_question_id(user_id):
@@ -589,9 +600,40 @@ def show_question(qid):
 @app.route('/question/<qid>/review')
 @login_required
 def review_question(qid):
-    """只读查看模式：显示题目、用户答案、正确答案。"""
+    """只读查看模式：显示题目、用户答案、正确答案。
+    支持在 session 历史中前后导航。"""
     user_id = get_user_id()
-    user_answer = None
+    history, cursor = get_history_context()
+
+    # 如果传了 qid，作为入口点；否则用当前 cursor 位置
+    if qid and qid != 'next' and qid != 'prev':
+        # 首次进入回顾：找到 qid 在历史中的位置
+        if qid in history:
+            session['history_index'] = history.index(qid)
+            cursor = session['history_index']
+        else:
+            # qid 不在历史中，直接以当前 cursor 为准
+            if cursor < 0 and len(history) >= 2:
+                session['history_index'] = len(history) - 2
+                cursor = session['history_index']
+    elif qid == 'prev':
+        # 「上一题」：向更早的方向移动
+        if cursor < 0:
+            if len(history) >= 2:
+                session['history_index'] = len(history) - 2
+        elif cursor > 0:
+            session['history_index'] = cursor - 1
+    elif qid == 'next':
+        # 「下一题」：向更新的方向移动
+        if cursor >= 0 and cursor < len(history) - 1:
+            session['history_index'] = cursor + 1
+
+    history, cursor = get_history_context()
+    if cursor < 0 or cursor >= len(history):
+        flash("没有可回顾的题目", "info")
+        return redirect(url_for('index'))
+
+    target_qid = history[cursor]
 
     # 从 history 表获取用户对该题的最后一次答案
     conn = get_db()
@@ -599,13 +641,12 @@ def review_question(qid):
     c.execute('''SELECT user_answer FROM history
                  WHERE user_id=? AND question_id=?
                  ORDER BY timestamp DESC LIMIT 1''',
-              (user_id, qid))
+              (user_id, target_qid))
     row = c.fetchone()
-    if row:
-        user_answer = row['user_answer']
+    user_answer = row['user_answer'] if row else ''
     conn.close()
 
-    q = fetch_question(qid)
+    q = fetch_question(target_qid)
     if q is None:
         flash("题目不存在", "error")
         return redirect(url_for('index'))
@@ -613,8 +654,9 @@ def review_question(qid):
     return render_template('question.html',
                           question=q,
                           review_mode=True,
-                          user_answer=user_answer or '',
-                          has_prev=has_previous_question())
+                          user_answer=user_answer,
+                          has_prev=has_previous_in_history(),
+                          has_next=has_next_in_history())
 
 @app.route('/history')
 @login_required

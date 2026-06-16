@@ -236,30 +236,30 @@ fun QuestionScreen(
                             ) { Text("继续答题") }
                         }
                     } else if (!showResult) {
-                        // Before submission: Submit + Previous
+                        // Before submission: Previous + Submit
+                        if (hasPreviousQuestion) {
+                            OutlinedButton(
+                                onClick = { viewModel.goToPreviousQuestion() },
+                                modifier = Modifier.weight(1f)
+                            ) { Text("上一题") }
+                        }
                         Button(
                             onClick = { viewModel.submitAnswer() },
                             modifier = Modifier.weight(1f),
                             enabled = selectedAnswers.isNotEmpty()
                         ) { Text("提交答案") }
+                    } else {
+                        // After submission: Previous + Next
                         if (hasPreviousQuestion) {
                             OutlinedButton(
                                 onClick = { viewModel.goToPreviousQuestion() },
                                 modifier = Modifier.weight(1f)
                             ) { Text("上一题") }
                         }
-                    } else {
-                        // After submission: Next + Previous
                         Button(
                             onClick = { viewModel.nextQuestion() },
                             modifier = Modifier.weight(1f)
                         ) { Text("下一题") }
-                        if (hasPreviousQuestion) {
-                            OutlinedButton(
-                                onClick = { viewModel.goToPreviousQuestion() },
-                                modifier = Modifier.weight(1f)
-                            ) { Text("上一题") }
-                        }
                     }
 
                 }
