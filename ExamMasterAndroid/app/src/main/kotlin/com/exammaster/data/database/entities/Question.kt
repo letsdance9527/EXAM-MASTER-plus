@@ -19,13 +19,13 @@ data class Question(
 ) {
     fun getOptionsMap(): Map<String, String> {
         val map = if (options.isNullOrEmpty()) {
-            emptyMap()
+            emptyMap<String, String>()
         } else {
             try {
                 val type = object : TypeToken<Map<String, String>>() {}.type
-                Gson().fromJson(options, type) ?: emptyMap()
+                Gson().fromJson(options, type) ?: emptyMap<String, String>()
             } catch (e: Exception) {
-                emptyMap()
+                emptyMap<String, String>()
             }
         }
         // 判断题兜底：CSV 中选项列为空时注入"正确"/"错误"
