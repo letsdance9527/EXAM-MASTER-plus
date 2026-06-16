@@ -145,7 +145,13 @@ fun AboutScreen(
                         label = "开发者",
                         value = "ShayneChen"
                     )
-                    
+
+                    InfoRow(
+                        icon = Icons.Default.Edit,
+                        label = "修改者",
+                        value = "ApplePie"
+                    )
+
                     InfoRow(
                         icon = Icons.Default.Email,
                         label = "联系邮箱",
@@ -183,11 +189,13 @@ fun AboutScreen(
                         
                         val githubText = buildAnnotatedString {
                             withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary)) {
-                                pushStringAnnotation(tag = "URL", annotation = "https://github.com/CiE-XinYuChen/EXAM-MASTER")
-                                append("CiE-XinYuChen/EXAM-MASTER")
+                                pushStringAnnotation(tag = "URL", annotation = "https://github.com/letsdance9527/EXAM-MASTER-plus")
+                                append("letsdance9527/EXAM-MASTER-plus")
                                 pop()
                             }
                         }
+
+                        val githubUrl = "https://github.com/letsdance9527/EXAM-MASTER-plus"
                         
                         ClickableText(
                             text = githubText,
@@ -351,7 +359,7 @@ fun AboutScreen(
                 )
                 
                 Text(
-                    text = "Built with ❤️ by ShayneChen",
+                    text = "Built with ❤️ by ShayneChen & ApplePie",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,

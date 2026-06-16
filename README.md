@@ -134,7 +134,6 @@ cd ExamMasterAndroid
 - ✅ **判断题支持**: 自动注入正确/错误选项
 - 🎨 **UI 优化**: 正确/错误答案颜色区分，选择状态保留
 - 📍 **位置记忆强化**: 所有模式共享浏览位置
-- 🔧 **格式说明常驻**: 修复 5 秒消失 Bug
 
 **Android 端新增：**
 - 🗂 **多题库切换**: 首页题库选择对话框
@@ -145,39 +144,6 @@ cd ExamMasterAndroid
 - 🔄 **错题练习**: 随机抽取未完成的错题
 - 🗑 **清除数据**: 设置页确认对话框
 - 📜 **垂直滚动**: 修复长题目底部按钮被裁切
-- 🎨 **选项对错着色**: 提交后绿色/红色边框
-
----
-
-## 📁 项目结构
-
-```
-EXAM-MASTER/
-├── app.py                  # Flask 主应用
-├── bank_manager.py         # 题库管理模块
-├── bank_config.json        # 题库配置文件
-├── requirements.txt        # Python 依赖
-├── static/style.css        # 全局样式
-├── templates/              # Jinja2 模板
-│   ├── base.html           # 基础布局
-│   ├── index.html          # 首页
-│   ├── question.html       # 答题页
-│   ├── manage_banks.html   # 题库管理
-│   ├── import_bank.html    # CSV 导入
-│   └── ...
-├── tools/                  # CSV 题库 + 转换脚本
-│   ├── questions.csv       # 毛概题库 (881题)
-│   ├── questions_202505共同体概论.csv
-│   ├── questions_old_202412.csv
-│   └── convert_txt_csv.py
-├── 移动通信_题库导出.csv    # 5G移动通信题库 (415题)
-└── ExamMasterAndroid/      # Android 应用
-    └── app/src/main/
-        ├── assets/         # 内置题库 + banks.json
-        └── kotlin/com/exammaster/
-            ├── data/       # 数据层 (实体/DAO/仓库)
-            └── ui/         # UI 层 (页面/ViewModel)
-```
 
 ---
 
@@ -193,14 +159,11 @@ EXAM-MASTER/
 |----------|----------|
 | ![题库管理](screenshots/web题库管理.png) | ![CSV导入](screenshots/Web%20CSV%20导入.png) |
 
-> 💡 更多截图（Android 端、回顾模式等）可补充到 `screenshots/` 目录
-
 ---
 
-## 🛠 开发者
+## 🛠 更新者
 
-- **作者**: ShayneChen
-- **联系方式**: [xinyu-c@outlook.com](mailto:xinyu-c@outlook.com)
+- **作者**: ApplePie
 - **项目主页**: [GitHub](https://github.com/letsdance9527/EXAM-MASTER-plus)
 
 ## 📄 许可证
