@@ -541,7 +541,7 @@ def show_question(qid):
     if request.method == 'POST':
         user_answer = request.form.getlist('answer')
         user_answer_str = "".join(sorted(user_answer))
-        correct = int(user_answer_str == "".join(sorted(q['answer'])))
+        correct = int(user_answer_str == q['answer'])
 
         # Save answer to history
         c.execute(
@@ -1045,7 +1045,7 @@ def show_sequential_question(qid):
     if request.method == 'POST':
         user_answer = request.form.getlist('answer')
         user_answer_str = "".join(sorted(user_answer))
-        correct = int(user_answer_str == "".join(sorted(q['answer'])))
+        correct = int(user_answer_str == q['answer'])
         
         # Save answer to history
         c.execute('INSERT INTO history (user_id, question_id, user_answer, correct) '
@@ -1245,7 +1245,7 @@ def submit_timed_mode():
             continue
             
         user_answer_str = "".join(sorted(user_answer))
-        correct = 1 if user_answer_str == "".join(sorted(q['answer'])) else 0
+        correct = 1 if user_answer_str == q['answer'] else 0
         
         if correct:
             correct_count += 1
@@ -1368,7 +1368,7 @@ def submit_exam():
             continue
             
         user_answer_str = "".join(sorted(user_answer))
-        correct = 1 if user_answer_str == "".join(sorted(q['answer'])) else 0
+        correct = 1 if user_answer_str == q['answer'] else 0
         
         if correct:
             correct_count += 1

@@ -128,7 +128,7 @@ class ExamViewModel(private val repository: ExamRepository) : ViewModel() {
     fun submitAnswer() {
         val question = _currentQuestion.value ?: return
         val userAnswer = _selectedAnswers.value.sorted().joinToString("")
-        val correctAnswer = question.answer.toCharArray().sorted().joinToString("")
+        val correctAnswer = question.answer
         
         val isCorrect = userAnswer == correctAnswer
         _isAnswerCorrect.value = isCorrect
