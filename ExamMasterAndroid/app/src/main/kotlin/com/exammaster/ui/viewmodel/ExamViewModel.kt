@@ -239,7 +239,7 @@ class ExamViewModel(
         when (_currentMode.value) {
             QuizMode.RANDOM -> loadRandomQuestion()
             QuizMode.SEQUENTIAL -> loadSequentialQuestion()
-            QuizMode.WRONG_ONLY -> loadWrongQuestion()
+            QuizMode.WRONG_ONLY -> viewModelScope.launch { loadWrongQuestion() }
             else -> loadRandomQuestion()
         }
     }
