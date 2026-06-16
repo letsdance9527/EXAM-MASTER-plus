@@ -91,3 +91,62 @@ def get_csv_path(bank_id=None):
     if os.path.isabs(csv_file):
         return csv_file
     return os.path.join(_BASE_DIR, csv_file)
+
+
+def add_bank_to_config(bank_id, name, csv_file, question_count, description=""):
+    """
+    Add a new bank to bank_config.json. Does nothing if bank_id already exists.
+
+    Args:
+        bank_id: Unique bank ID string
+        name: Display name
+        csv_file: Relative or absolute path to CSV
+        question_count: Number of questions
+        description: Optional description text
+    """
+    config = load_bank_config()
+    for b in config["banks"]:
+        if b["id"] == bank_id:
+            return  # Already exists
+    config["banks"].append({
+        "id": bank_id,
+        "name": name,
+        "csv_file": csv_file,
+        "question_count": question_count,
+        "description": description or name
+    })
+    save_bank_config(config)
+
+
+def validate_csv_header(filepath):
+    """
+    Validate that a CSV file has the required columns.
+
+    Returns (is_valid, error_message, question_count).
+    """
+    import csv
+    try:
+        with open(filepath, 'r', encoding='utf-8-sig') as f:
+            reader = csv.DictReader(f)
+            headers = reader.fieldnames
+            if headers is None:
+                return False, "无法读取CSV表头", 0
+            required = ["题号", "题干", "答案", "题型"]
+            missing = [h for h in required if h not in headers]
+            if missing:
+                return False, f"缺少必要列: {', '.join(missing)}", 0
+            # Count rows and validate types
+            count = 0
+            valid_types = {"单选题", "多选题", "判断题", ""}
+            for row in reader:
+                qtype = row.get("题型", "").strip()
+                if qtype and qtype not in valid_types:
+                    return False, f"第{count+2}行: 无效题型'{qtype}'，有效值为: 单选题/多选题/判断题", 0
+                count += 1
+            if count == 0:
+                return False, "CSV文件中没有题目数据", 0
+            return True, "", count
+    except UnicodeDecodeError:
+        return False, "文件编码错误，请使用UTF-8编码保存", 0
+    except Exception as e:
+        return False, f"读取CSV失败: {str(e)}", 0

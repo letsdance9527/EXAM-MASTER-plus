@@ -41,8 +41,10 @@ from werkzeug.security import generate_password_hash, check_password_hash
 # Local imports
 from bank_manager import (
     load_bank_config, save_bank_config,
-    get_active_bank, get_all_banks, switch_bank, get_csv_path
+    get_active_bank, get_all_banks, switch_bank, get_csv_path,
+    add_bank_to_config, validate_csv_header
 )
+from werkzeug.utils import secure_filename
 
 # Initialize Flask application
 app = Flask(__name__)
@@ -1685,6 +1687,53 @@ def reload_bank():
 
     flash(f"已重新导入题库: {active['name']}，共 {imported_count} 道题目", "success")
     return redirect(url_for('manage_banks'))
+
+
+@app.route('/admin/banks/import', methods=['GET', 'POST'])
+@login_required
+def import_bank():
+    """Import a new question bank from an uploaded CSV file."""
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        file = request.files.get('csv_file')
+
+        if not name:
+            flash("请输入题库名称", "error")
+            return render_template('import_bank.html')
+        if not file or file.filename == '':
+            flash("请选择要上传的CSV文件", "error")
+            return render_template('import_bank.html')
+        if not file.filename.lower().endswith('.csv'):
+            flash("只允许上传 .csv 文件", "error")
+            return render_template('import_bank.html')
+
+        # 生成安全的文件名和题库ID
+        safe_name = secure_filename(file.filename.rsplit('.', 1)[0])
+        bank_id = f"imported_{safe_name}"
+        saved_filename = f"imported_{safe_name}.csv"
+        save_path = os.path.join(os.path.dirname(__file__), 'tools', saved_filename)
+
+        # 确保 tools 目录存在
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+
+        # 保存文件
+        file.save(save_path)
+
+        # 验证CSV格式
+        valid, error_msg, question_count = validate_csv_header(save_path)
+        if not valid:
+            os.remove(save_path)  # 删除无效文件
+            flash(f"CSV格式错误: {error_msg}", "error")
+            return render_template('import_bank.html')
+
+        # 注册到配置
+        csv_rel_path = f"tools/{saved_filename}"
+        add_bank_to_config(bank_id, name, csv_rel_path, question_count)
+
+        flash(f"题库 '{name}' 导入成功，共 {question_count} 道题目。可切换到该题库使用。", "success")
+        return redirect(url_for('manage_banks'))
+
+    return render_template('import_bank.html')
 
 
 @app.route('/api/active_bank')

@@ -27,6 +27,7 @@ fun HomeScreen(
     val currentBank by viewModel.currentBank.collectAsState()
     val availableBanks by viewModel.availableBanks.collectAsState()
     var showBankDialog by remember { mutableStateOf(false) }
+    var showImportDialog by remember { mutableStateOf(false) }
     
     Column(
         modifier = Modifier
@@ -104,6 +105,22 @@ fun HomeScreen(
                     TextButton(onClick = { showBankDialog = false }) {
                         Text("关闭")
                     }
+                },
+                dismissButton = {
+                    TextButton(onClick = {
+                        showBankDialog = false
+                        showImportDialog = true
+                    }) { Text("导入题库") }
+                }
+            )
+        }
+
+        // Import Bank Dialog
+        if (showImportDialog) {
+            ImportBankDialog(
+                onDismiss = { showImportDialog = false },
+                onImport = { name, uri ->
+                    viewModel.importBank(name, uri)
                 }
             )
         }

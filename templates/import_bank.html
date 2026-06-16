@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}导入题库 - ExamMaster{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="mb-0"><i class="fas fa-upload"></i> 导入题库</h2>
+        </div>
+        <div class="card-body">
+            <!-- 格式说明 -->
+            <div class="alert alert-info mb-4">
+                <h5><i class="fas fa-info-circle"></i> CSV 格式要求</h5>
+                <table class="table table-sm table-borderless mb-0 mt-2">
+                    <tr>
+                        <td><strong>编码</strong></td>
+                        <td>UTF-8（推荐带BOM的 UTF-8-SIG）</td>
+                    </tr>
+                    <tr>
+                        <td><strong>必要列</strong></td>
+                        <td><code>题号, 题干, 答案, 题型</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>可选列</strong></td>
+                        <td><code>A, B, C, D, E, 难度, 类别</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>题型取值</strong></td>
+                        <td><code>单选题</code> / <code>多选题</code> / <code>判断题</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>答案格式</strong></td>
+                        <td>单选题: <code>A</code>；多选题: <code>AB</code> 或 <code>ABCD</code>；判断题: <code>正确</code> 或 <code>错误</code></td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- 上传表单 -->
+            <form method="POST" action="{{ url_for('import_bank') }}" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label for="name" class="form-label"><strong>题库名称</strong></label>
+                    <input type="text" class="form-control" id="name" name="name"
+                           placeholder="例如：2025移动通信期中考试题库"
+                           required autofocus>
+                </div>
+
+                <div class="mb-3">
+                    <label for="csv_file" class="form-label"><strong>选择CSV文件</strong></label>
+                    <input type="file" class="form-control" id="csv_file" name="csv_file"
+                           accept=".csv"
+                           required>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-check"></i> 导入题库
+                    </button>
+                    <a href="{{ url_for('manage_banks') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> 返回
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

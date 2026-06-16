@@ -1,6 +1,7 @@
 package com.exammaster.data
 
 import android.content.Context
+import android.net.Uri
 import com.exammaster.data.database.entities.Question
 import com.google.gson.Gson
 import java.io.BufferedReader
@@ -41,7 +42,94 @@ object QuestionDataLoader {
         
         return questions
     }
-    
+
+    fun loadQuestionsFromFile(filePath: String): List<Question> {
+        val questions = mutableListOf<Question>()
+        try {
+            java.io.File(filePath).bufferedReader().use { reader ->
+                reader.readLine() // Skip header
+                var line: String?
+                while (reader.readLine().also { line = it } != null) {
+                    line?.let { csvLine ->
+                        val question = parseCSVLine(csvLine)
+                        if (question != null) questions.add(question)
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return questions
+    }
+
+    fun loadQuestionsFromUri(context: Context, uri: Uri): List<Question> {
+        val questions = mutableListOf<Question>()
+        try {
+            context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { reader ->
+                reader.readLine() // Skip header
+                var line: String?
+                while (reader.readLine().also { line = it } != null) {
+                    line?.let { csvLine ->
+                        val question = parseCSVLine(csvLine)
+                        if (question != null) questions.add(question)
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return questions
+    }
+
+    fun copyCsvFromUri(context: Context, uri: Uri, targetName: String): Boolean {
+        return try {
+            val targetFile = java.io.File(context.filesDir, "banks/$targetName")
+            targetFile.parentFile?.mkdirs()
+            context.contentResolver.openInputStream(uri)?.use { input ->
+                targetFile.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    fun validateCsvFromUri(context: Context, uri: Uri): Pair<Boolean, String> {
+        return try {
+            context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { reader ->
+                val header = reader.readLine() ?: return Pair(false, "无法读取CSV表头")
+                val headers = parseCSVFields(header).map { it.replace("\"", "") }
+                val required = listOf("题号", "题干", "答案", "题型")
+                val missing = required.filter { it !in headers }
+                if (missing.isNotEmpty()) {
+                    return Pair(false, "缺少必要列: ${missing.joinToString(", ")}")
+                }
+                var count = 0
+                val validTypes = setOf("单选题", "多选题", "判断题", "")
+                reader.readLine() // Read first data line to check format
+                count++
+                var line: String?
+                while (reader.readLine().also { line = it } != null) {
+                    val fields = parseCSVFields(line!!)
+                    if (fields.size > 9) {
+                        val qtype = fields[9].replace("\"", "")
+                        if (qtype.isNotEmpty() && qtype !in validTypes) {
+                            return Pair(false, "第${count + 2}行: 无效题型'$qtype'")
+                        }
+                    }
+                    count++
+                }
+                if (count == 0) return Pair(false, "CSV文件中没有题目数据")
+                Pair(true, count.toString())
+            } ?: Pair(false, "无法打开文件")
+        } catch (e: Exception) {
+            Pair(false, "读取失败: ${e.message}")
+        }
+    }
+
     private fun parseCSVLine(line: String): Question? {
         try {
             // Simple CSV parsing - handle quoted fields

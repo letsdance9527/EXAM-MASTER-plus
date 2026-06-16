@@ -148,9 +148,59 @@ class ExamViewModel(
     val currentBank: StateFlow<Bank> = _currentBank.asStateFlow()
 
     private val _availableBanks = MutableStateFlow(
-        Bank.loadFromAssets(getApplication()).banks
+        Bank.getAllBanks(getApplication())
     )
     val availableBanks: StateFlow<List<Bank>> = _availableBanks.asStateFlow()
+
+    fun importBank(name: String, uri: android.net.Uri): String? {
+        // Returns null on success, error message string on failure
+        val app = getApplication<Application>()
+        val context: android.content.Context = app
+        // Validate CSV format
+        val result = QuestionDataLoader.validateCsvFromUri(context, uri)
+        val valid = result.first
+        val msg = result.second
+        if (!valid) return msg
+
+        val questionCount = msg.toIntOrNull() ?: return "无法统计题目数量"
+        val bankId = "imported_${System.currentTimeMillis()}"
+
+        // Copy to internal storage
+        val csvFileName = "$bankId.csv"
+        if (!QuestionDataLoader.copyCsvFromUri(context, uri, csvFileName)) {
+            return "保存文件失败"
+        }
+
+        // Register
+        Bank.addImportedBank(context, bankId, name, csvFileName, questionCount)
+
+        // Switch to new bank
+        viewModelScope.launch {
+            Bank.switchBank(context, bankId)
+            _currentBank.value = Bank.getBankById(context, bankId) ?: Bank.getActiveBank(context)
+            _availableBanks.value = Bank.getAllBanks(context)
+            // Re-import questions
+            _isLoading.value = true
+            repository.clearAllUserData()
+            repository.deleteAllQuestions()
+            val targetPath = java.io.File(context.filesDir, "banks/$csvFileName").absolutePath
+            val questions = QuestionDataLoader.loadQuestionsFromFile(targetPath)
+            if (questions.isNotEmpty()) {
+                repository.insertQuestions(questions)
+            }
+            savePosition(null)
+            _currentQuestion.value = null
+            _selectedAnswers.value = emptySet()
+            _showResult.value = false
+            loadStatistics()
+            _isLoading.value = false
+        }
+        return null
+    }
+
+    fun refreshAvailableBanks() {
+        _availableBanks.value = Bank.getAllBanks(getApplication())
+    }
 
     fun switchBank(bankId: String) {
         viewModelScope.launch {
