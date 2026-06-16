@@ -1,173 +1,214 @@
 # EXAM-MASTER
-# dev_2.0 分支发布第一个预览版！专为适配移动端触摸体验，采用基于Flutter开发的web/iOS/Android客户端，拥有更丰富的题库（包括多媒体）和更好的UI，交互体验，main分支不会再维护。
+
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Flask](https://img.shields.io/badge/Flask-2.0+-green.svg)
 ![Python](https://img.shields.io/badge/Python-3.6+-blue.svg)
-![Android](https://img.shields.io/badge/Android-v3.0-green.svg)
-![Platform](https://img.shields.io/badge/Platform-Web%20%7C%20Mobile-blue.svg)
+![Android](https://img.shields.io/badge/Android-v3.1-green.svg)
+![Platform](https://img.shields.io/badge/Platform-Web%20%7C%20Android-blue.svg)
 
-一款基于 **Flask** 实现的全平台在线刷题系统，现已支持 **Web端** 和 **Android移动端**。提供从题库管理、用户注册登录，到随机出题、顺序答题、定时模式、模拟考试，以及收藏、标记、统计分析等多种功能，帮助用户随时随地高效提升学习和练习效果。
-
-## 🌟 功能特性
-
-### 📱 多平台支持
-- **Web端**: 现代化响应式设计，支持桌面和移动浏览器
-- **Android端**: 原生Android应用 (v3.0)，流畅的移动体验
-- **同步数据**: 跨平台数据同步，随时切换设备继续学习
-
-### 📝 用户管理
-- **注册与登录**: 安全的用户账户创建与登录系统
-- **个人数据跟踪**: 自动保存学习进度与题目记录
-- **智能续答**: 系统记忆答题进度，无缝继续学习
-
-### 📚 题库管理
-- **CSV导入题库**: 便捷的题库导入功能
-- **多种题型支持**: 单选题、多选题、判断题、填空题等
-- **分类与难度系统**: 按类别和难度对题目进行组织
-- **题目浏览**: 分页浏览所有题目，支持快速定位
-
-### 📋 答题模式
-- **随机答题**: 快速练习，从题库随机抽题
-- **顺序答题**: 从上次停止的位置开始，系统实时记录进度，保证下次访问时能无缝继续
-- **错题本**: 专注复习做错的题目，针对性提升
-- **定时模式**: 在规定时间内完成题目，提高效率
-- **模拟考试**: 模拟真实考试环境，一次性提交所有答案
-
-### 🔍 查找与筛选
-- **关键词搜索**: 通过题干内容或题号快速查找题目
-- **智能筛选**: 按题型、类别、难度等条件筛选题目
-- **全站搜索**: 支持跨页面搜索，不限于当前页面
-- **筛选芯片**: 移动端友好的筛选界面，一键切换题型
-
-### 🔖 个性化学习
-- **收藏与标记**: 将重要题目加入收藏夹，添加个性化标记
-- **答题历史**: 完整记录所有已答题目及正确情况
-- **统计分析**: 详细的答题统计，包括正确率、难度分布和学习进度
-- **学习轨迹**: 追踪学习路径，了解知识掌握情况
-
-## 💻 技术栈
-
-### Web端
-- **后端**: Python + Flask
-- **数据库**: SQLite
-- **前端**: HTML/CSS + JavaScript + Jinja2模板引擎
-- **UI框架**: Bootstrap工具类 + 自定义CSS
-- **数据格式**: CSV导入题库、JSON存储选项
-
-### Android端
-- **开发语言**: Kotlin
-- **UI框架**: Jetpack Compose
-- **架构模式**: MVVM + Repository Pattern
-- **数据库**: Room (SQLite)
-- **网络请求**: Retrofit + OkHttp
-
-## 🚀 快速开始
-
-### Web端部署
-
-1. **克隆仓库**
-   ```bash
-   git clone https://github.com/CiE-XinYuChen/EXAM-MASTER.git
-   cd EXAM-MASTER
-   ```
-
-2. **安装依赖**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **启动应用**
-   ```bash
-   python app.py
-   ```
-   应用将在 http://localhost:32220 上运行
-
-### Android端安装
-
-1. **直接下载APK**
-   - 访问项目首页或[Releases页面](https://github.com/CiE-XinYuChen/EXAM-MASTER/releases)
-   - 下载最新版本 `exammaster-v3.0.apk`
-   
-2. **安装说明**
-   - 允许"未知来源"应用安装
-   - 安装后输入Web端相同的服务器地址即可同步数据
-
-3. **本地编译**（可选）
-   ```bash
-   cd ExamMasterAndroid
-   ./gradlew assembleDebug
-   ```
-
-### 题库格式
-
-题库使用CSV格式，包含以下字段：
-- 题号: 题目唯一标识
-- 题干: 题目内容
-- A, B, C, D, E: 选项（可选）
-- 答案: 正确答案，如"A"或"ABCD"（多选）
-- 难度: 题目难度级别
-- 题型: 如"单选题"、"多选题"等
-- 类别: 题目所属类别（可选）
-
-## 📖 使用指南
-
-### 基本操作
-
-1. **注册/登录**: 首次使用需注册账号，之后直接登录
-2. **导航菜单**: 页面顶部提供多种功能入口
-3. **答题流程**: 
-   - 选择答题模式（随机/顺序/错题等）
-   - 选择答案后提交
-   - 系统自动判断正确性并记录
-
-### 特殊功能
-
-- **搜索题目**: 在"搜索题目"页面输入关键词
-- **收藏题目**: 在答题页面点击"收藏"按钮，在"我的收藏"中查看
-- **顺序刷题**: 系统实时记录进度，随时退出后下次访问将自动从上次答题位置继续
-- **统计分析**: 在"统计与反馈"页面查看个人学习数据
-
-## 🔄 最近更新
-
-### v3.0 - Android端正式发布 (2025-05)
-- **🎉 Android应用上线**: 原生Android应用正式发布，支持离线使用
-- **📱 移动端优化**: 完全重写移动端浏览题目UI，现代化卡片设计
-- **🔍 全站搜索**: 搜索和筛选功能从前端改为后端实现，支持跨页面操作
-- **🛠 UI修复**: 修复电脑端布局串位问题，完善CSS工具类定义
-- **🎯 筛选增强**: 修复移动端筛选芯片显示问题，正确显示所有题型
-
-### v2.1 - Web端功能完善 (2025-05)
-- **🔧 顺序答题优化**: 智能记忆答题进度，从上次停止位置继续
-- **📊 统计功能增强**: 更详细的学习数据分析和可视化
-- **🎨 响应式优化**: 改进移动端浏览体验和交互设计
-
-### v2.0 - 核心功能重构 (2025-04)
-- **🏗 架构升级**: 重构核心答题逻辑，提升系统稳定性
-- **💾 数据持久化**: 优化数据存储和查询性能
-- **🎪 界面美化**: 全新UI设计，提升用户体验
-
-## 📊 项目截图
-![86e83be8fcebbb8110a59f5929e77f96](https://github.com/user-attachments/assets/0b41c79d-5a42-4136-ae2e-a4c5c37b5520)
-![8d8919fb3dba32585d0e2e01d4378df0](https://github.com/user-attachments/assets/a2a7c83b-ab16-430a-92ed-2c71877d86a3)
-![9c083e6f3509c0741c710f0140f08ae7](https://github.com/user-attachments/assets/91be6aaf-b1c0-4f06-a19b-ef713526a132)
-![01b260ee29663d9f5e0236636785404e](https://github.com/user-attachments/assets/5cb79c3b-beaa-4fe6-af98-a2dc593ed79c)
-![032c2c61fd1e51511bf03a83aae71e10](https://github.com/user-attachments/assets/e00a6d37-e086-42a0-92ac-028ad7e6298c)
-
-
-## 🛠 开发者信息
-
-- **作者**: ShayneChen
-- **联系方式**: [xinyu-c@outlook.com](mailto:xinyu-c@outlook.com)
-- **项目主页**: [GitHub](https://github.com/CiE-XinYuChen/EXAM-MASTER)
-
-## 📄 许可证
-
-本项目基于 MIT 许可证开源。
+一款基于 **Flask** 的在线刷题系统，支持 **Web 端** 和 **Android 端**。提供题库管理、多模式答题、统计分析、CSV 导入导出等完整功能。
 
 ---
 
-欢迎提交Issue或Pull Request，共同完善本系统！
+## 🌟 功能特性
 
+### 📚 题库管理
+- **多题库切换**: 内置 4 套题库，一键切换（清除旧数据 + 自动导入）
+- **外部 CSV 导入**: Web 端上传 CSV 文件，Android 端从文件选择器导入，自动验证格式
+- **题库配置**: `bank_config.json` 统一管理所有题库，支持动态添加
+- **多种题型**: 单选题、多选题、判断题（自动注入正确/错误选项）
 
+### 📋 答题模式
+- **随机答题**: 从题库随机抽取未完成的题目
+- **顺序答题**: 从上次位置继续，自动记忆进度（Web + Android 双向同步）
+- **错题练习**: 专门复习答错的题目
+- **收藏题目**: 将重要题目加入收藏夹
 
+### 🔄 答题体验
+- **上一题回顾**: 支持回看本次已答的所有题目，游标式前后导航，只读模式显示用户答案和正确答案
+- **提交后保留选择**: 提交答案后选项保持选中状态，方便查看自己的选择
+- **正确/错误标记**: 正确答案绿色边框，错误选择红色边框，一目了然
+- **位置记忆**: 跨会话记住最后浏览位置，下次打开继续
 
+### 📊 统计与分析
+- 答题进度跟踪（已答/总数/正确率）
+- 错题排行、分类统计
+- 完整答题历史记录
+
+### 📱 Android 端特性
+- Material Design 3 原生 UI
+- 离线优先，全部数据本地存储
+- 垂直滚动答题页面
+- 单选/多选/判断题交互优化
+
+---
+
+## 💻 技术栈
+
+| 层 | Web 端 | Android 端 |
+|---|--------|-----------|
+| 语言 | Python 3 | Kotlin |
+| 框架 | Flask | Jetpack Compose |
+| 数据库 | SQLite | Room (SQLite) |
+| 架构 | Server-rendered (Jinja2) | MVVM + Repository |
+| UI | Bootstrap + 自定义 CSS | Material Design 3 |
+
+---
+
+## 🚀 快速开始
+
+### Web 端
+
+```bash
+git clone https://github.com/letsdance9527/EXAM-MASTER-plus.git
+cd EXAM-MASTER-plus
+pip install -r requirements.txt
+python app.py
+# 访问 http://localhost:32220
+```
+
+### Android 端
+
+```bash
+cd ExamMasterAndroid
+# 用 Android Studio 打开，或命令行构建：
+./gradlew assembleDebug
+# APK 位于 app/build/outputs/apk/debug/
+```
+
+---
+
+## 📖 使用指南
+
+### 题库管理
+
+1. 点击导航栏「题库设置」→ 查看所有可用题库
+2. 点击「切换到此题库」→ 确认清空 → 自动导入新题库
+3. 点击「导入新题库」→ 输入名称 + 选择 CSV → 提交
+4. 点击「重新导入」→ 刷新当前题库数据
+
+### CSV 格式要求
+
+```
+题号,题干,A,B,C,D,E,答案,难度,题型
+1,5G的服务对象仍然仅以人为中心。,,,,,,错误,无,判断题
+2,LTE系统的多址方式是____。,TDMA,CDMA,OFDMA,FDMA,,C,无,单选题
+```
+
+| 列名 | 必填 | 说明 |
+|------|------|------|
+| 题号 | ✅ | 唯一标识，数字 |
+| 题干 | ✅ | 题目内容 |
+| A~E | 可选 | 选项文本（判断题留空） |
+| 答案 | ✅ | 单选: `A`；多选: `AB`；判断: `正确`/`错误` |
+| 难度 | 可选 | 如 `无`、`易`、`中`、`难` |
+| 题型 | ✅ | `单选题` / `多选题` / `判断题` |
+| 类别 | 可选 | 如 `移动通信` |
+
+> **编码**: UTF-8（推荐带 BOM 的 UTF-8-SIG）
+
+### 答题流程
+
+1. **首页** → 选择答题模式
+2. **答题页** → 选择答案 → 提交 → 查看结果
+3. **上一题** → 点击按钮回看本次已答题目（只读模式，显示正确/错误标记）
+4. **继续答题** → 进入下一题
+
+### 顺序答题位置记忆
+
+- 系统自动保存当前浏览位置
+- 退出后重新进入「顺序答题」→ 从上次位置继续
+- 首页显示「顺序答题将从第 X 题继续」提示
+- 重置历史时清除位置
+
+---
+
+## 🔄 最近更新
+
+### v3.1 — 功能完整版 (2025-06)
+
+**Web 端新增：**
+- 🗂 **多题库切换**: 题库管理页面，一键切换 4 套题库
+- 📤 **外部 CSV 导入**: 上传 CSV 文件自动验证格式并注册
+- ↩️ **上一题回顾**: 游标式历史导航，回看本次所有已答题
+- ✅ **判断题支持**: 自动注入正确/错误选项
+- 🎨 **UI 优化**: 正确/错误答案颜色区分，选择状态保留
+- 📍 **位置记忆强化**: 所有模式共享浏览位置
+- 🔧 **格式说明常驻**: 修复 5 秒消失 Bug
+
+**Android 端新增：**
+- 🗂 **多题库切换**: 首页题库选择对话框
+- 📤 **外部 CSV 导入**: 文件选择器 + 格式验证 + 错误提示
+- ↩️ **上一题回顾**: 游标式历史导航
+- ✅ **判断题支持**: 选项注入 + 单选行为 + 答案比较修复
+- 📍 **位置记忆**: SharedPreferences 持久化
+- 🔄 **错题练习**: 随机抽取未完成的错题
+- 🗑 **清除数据**: 设置页确认对话框
+- 📜 **垂直滚动**: 修复长题目底部按钮被裁切
+- 🎨 **选项对错着色**: 提交后绿色/红色边框
+
+---
+
+## 📁 项目结构
+
+```
+EXAM-MASTER/
+├── app.py                  # Flask 主应用
+├── bank_manager.py         # 题库管理模块
+├── bank_config.json        # 题库配置文件
+├── requirements.txt        # Python 依赖
+├── static/style.css        # 全局样式
+├── templates/              # Jinja2 模板
+│   ├── base.html           # 基础布局
+│   ├── index.html          # 首页
+│   ├── question.html       # 答题页
+│   ├── manage_banks.html   # 题库管理
+│   ├── import_bank.html    # CSV 导入
+│   └── ...
+├── tools/                  # CSV 题库 + 转换脚本
+│   ├── questions.csv       # 毛概题库 (881题)
+│   ├── questions_202505共同体概论.csv
+│   ├── questions_old_202412.csv
+│   └── convert_txt_csv.py
+├── 移动通信_题库导出.csv    # 5G移动通信题库 (415题)
+└── ExamMasterAndroid/      # Android 应用
+    └── app/src/main/
+        ├── assets/         # 内置题库 + banks.json
+        └── kotlin/com/exammaster/
+            ├── data/       # 数据层 (实体/DAO/仓库)
+            └── ui/         # UI 层 (页面/ViewModel)
+```
+
+---
+
+## 📊 截图建议
+
+建议添加以下截图（可放在 `screenshots/` 目录）：
+
+| 序号 | 内容 | 说明 |
+|------|------|------|
+| 1 | Web 首页 | 统计卡片 + 模式按钮 + 题库名称 + 位置提示 |
+| 2 | Web 答题页 | 选项选中状态 + 提交后正确/错误标记 |
+| 3 | Web 回顾模式 | 只读查看历史题目 + 上一题/下一题导航 |
+| 4 | Web 题库管理 | 题库列表 + 切换/重载/导入按钮 |
+| 5 | Web CSV 导入页 | 格式说明卡片 + 上传表单 |
+| 6 | Android 首页 | 统计 + 模式入口 + 题库切换 |
+| 7 | Android 答题页 | 选项选择 + 提交按钮 + 上一题 |
+| 8 | Android 题库切换 | 题库列表对话框 + 导入入口 |
+| 9 | Android 导入对话框 | 格式说明 + 文件名 + 错误提示 |
+
+---
+
+## 🛠 开发者
+
+- **作者**: ShayneChen
+- **联系方式**: [xinyu-c@outlook.com](mailto:xinyu-c@outlook.com)
+- **项目主页**: [GitHub](https://github.com/letsdance9527/EXAM-MASTER-plus)
+
+## 📄 许可证
+
+MIT License
+
+---
+
+欢迎提交 Issue 或 Pull Request！
