@@ -359,7 +359,7 @@ fun AboutScreen(
                 )
                 
                 Text(
-                    text = "Built with ❤️ by ShayneChen & ApplePie",
+                    text = "Built by ShayneChen & ApplePie",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
