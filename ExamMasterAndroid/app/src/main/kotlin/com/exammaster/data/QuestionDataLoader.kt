@@ -61,6 +61,12 @@ object QuestionDataLoader {
                 if (optionD.isNotEmpty()) options["D"] = optionD
                 if (optionE.isNotEmpty()) options["E"] = optionE
                 
+                // 判断题：CSV 中选项列为空，注入"正确"/"错误"选项
+                if (qtype == "判断题" && options.isEmpty()) {
+                    options["正确"] = "正确"
+                    options["错误"] = "错误"
+                }
+
                 val optionsJson = Gson().toJson(options)
                 
                 return Question(
