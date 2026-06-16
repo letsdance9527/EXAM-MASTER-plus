@@ -250,12 +250,6 @@ fun QuestionScreen(
                         }
                     }
 
-                    if (!reviewMode) {
-                        OutlinedButton(
-                            onClick = { viewModel.loadSequentialQuestion() },
-                            modifier = Modifier.weight(1f)
-                        ) { Text("顺序题目") }
-                    }
                 }
             }
         }
