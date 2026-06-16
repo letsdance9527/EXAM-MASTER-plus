@@ -150,7 +150,7 @@ class ExamViewModel(
             _selectedAnswers.value = emptySet()
             _showResult.value = false
             _currentMode.value = QuizMode.RANDOM
-            question?.let { savePosition(it.id) }
+            question?.let { savePosition(it.id); pushToHistory(it.id) }
             _isLoading.value = false
         }
     }
@@ -164,7 +164,7 @@ class ExamViewModel(
             _selectedAnswers.value = emptySet()
             _showResult.value = false
             _currentMode.value = QuizMode.SEQUENTIAL
-            question?.let { savePosition(it.id) }
+            question?.let { savePosition(it.id); pushToHistory(it.id) }
             _isLoading.value = false
         }
     }
@@ -178,7 +178,7 @@ class ExamViewModel(
             _selectedAnswers.value = emptySet()
             _showResult.value = false
             _currentMode.value = QuizMode.SEQUENTIAL
-            question?.let { savePosition(it.id) }
+            question?.let { savePosition(it.id); pushToHistory(it.id) }
             _isLoading.value = false
         }
     }
@@ -190,7 +190,9 @@ class ExamViewModel(
             _currentQuestion.value = question
             _selectedAnswers.value = emptySet()
             _showResult.value = false
+            _reviewMode.value = false
             savePosition(id)
+            pushToHistory(id)
             _isLoading.value = false
         }
     }
