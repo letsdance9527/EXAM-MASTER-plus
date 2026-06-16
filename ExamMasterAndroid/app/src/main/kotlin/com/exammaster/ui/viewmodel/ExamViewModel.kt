@@ -107,11 +107,20 @@ class ExamViewModel(private val repository: ExamRepository) : ViewModel() {
     }
     
     fun selectAnswer(option: String) {
+        val question = _currentQuestion.value
+        val isSingleChoice = question?.qtype == "单选题" || question?.qtype == "判断题"
         val currentAnswers = _selectedAnswers.value.toMutableSet()
-        if (currentAnswers.contains(option)) {
-            currentAnswers.remove(option)
-        } else {
+        if (isSingleChoice) {
+            // 单选/判断：替换选择
+            currentAnswers.clear()
             currentAnswers.add(option)
+        } else {
+            // 多选：切换
+            if (currentAnswers.contains(option)) {
+                currentAnswers.remove(option)
+            } else {
+                currentAnswers.add(option)
+            }
         }
         _selectedAnswers.value = currentAnswers
     }

@@ -18,7 +18,7 @@ data class Question(
     val createdAt: String? = null
 ) {
     fun getOptionsMap(): Map<String, String> {
-        return if (options.isNullOrEmpty()) {
+        val map = if (options.isNullOrEmpty()) {
             emptyMap()
         } else {
             try {
@@ -28,6 +28,11 @@ data class Question(
                 emptyMap()
             }
         }
+        // 判断题兜底：CSV 中选项列为空时注入"正确"/"错误"
+        if (qtype == "判断题" && map.isEmpty()) {
+            return mapOf("正确" to "正确", "错误" to "错误")
+        }
+        return map
     }
 
     fun getFormattedOptions(): List<Pair<String, String>> {
