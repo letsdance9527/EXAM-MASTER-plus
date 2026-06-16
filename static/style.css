@@ -671,9 +671,9 @@ input[type="radio"] {
 }
 
 .result-correct {
-  background-color: rgba(46, 196, 182, 0.2);
-  color: #1a8a7e;
-  border-left: 4px solid var(--success-color);
+  background-color: rgba(230, 57, 70, 0.2);
+  color: #b71c1c;
+  border-left: 4px solid var(--danger-color);
 }
 
 .result-incorrect {
