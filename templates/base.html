@@ -54,6 +54,9 @@
             <a href="{{ url_for('statistics') }}" class="nav-link{% if request.path == url_for('statistics') %} active{% endif %}">
                 <i class="fas fa-chart-bar"></i> 统计分析
             </a>
+            <a href="{{ url_for('manage_banks') }}" class="nav-link{% if request.path == url_for('manage_banks') %} active{% endif %}">
+                <i class="fas fa-cog"></i> 题库设置
+            </a>
         </div>
         
         <!-- 用户操作 -->

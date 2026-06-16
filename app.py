@@ -38,6 +38,12 @@ from flask import (
 )
 from werkzeug.security import generate_password_hash, check_password_hash
 
+# Local imports
+from bank_manager import (
+    load_bank_config, save_bank_config,
+    get_active_bank, get_all_banks, switch_bank, get_csv_path
+)
+
 # Initialize Flask application
 app = Flask(__name__)
 # Use environment variable for secret key with a fallback default
@@ -135,15 +141,21 @@ def init_db():
     
     conn.close()
 
-def load_questions_to_db(conn):
+def load_questions_to_db(conn, csv_file=None):
     """
     Load questions from a CSV file into the database.
-    
+
     Args:
         conn (sqlite3.Connection): The database connection
+        csv_file (str, optional): Path to the CSV file. If None, uses the active bank from config.
     """
+    if csv_file is None:
+        csv_path = get_csv_path()
+    else:
+        csv_path = csv_file if os.path.isabs(csv_file) else os.path.join(os.path.dirname(__file__), csv_file)
+
     try:
-        with open('questions.csv', 'r', encoding='utf-8-sig') as f:
+        with open(csv_path, 'r', encoding='utf-8-sig') as f:
             reader = csv.DictReader(f)
             c = conn.cursor()
             for row in reader:
@@ -151,6 +163,9 @@ def load_questions_to_db(conn):
                 for opt in ['A', 'B', 'C', 'D', 'E']:
                     if row.get(opt) and row[opt].strip():
                         options[opt] = row[opt]
+                # 判断题：CSV 中选项列为空，注入"正确"/"错误"选项
+                if row.get("题型") == "判断题" and not options:
+                    options = {"正确": "正确", "错误": "错误"}
                 c.execute(
                     "INSERT INTO questions (id, stem, answer, difficulty, qtype, category, options) VALUES (?,?,?,?,?,?,?)",
                     (
@@ -165,7 +180,7 @@ def load_questions_to_db(conn):
                 )
             conn.commit()
     except FileNotFoundError:
-        print("Warning: questions.csv file not found. No questions loaded.")
+        print(f"Warning: {csv_path} file not found. No questions loaded.")
     except Exception as e:
         print(f"Error loading questions: {e}")
 
@@ -233,6 +248,10 @@ def fetch_question(qid):
     conn.close()
     
     if row:
+        options = json.loads(row['options'])
+        # 判断题：CSV 中选项列为空，注入"正确"/"错误"选项
+        if row['qtype'] == '判断题' and not options:
+            options = {"正确": "正确", "错误": "错误"}
         return {
             'id': row['id'],
             'stem': row['stem'],
@@ -240,9 +259,41 @@ def fetch_question(qid):
             'difficulty': row['difficulty'],
             'type': row['qtype'],
             'category': row['category'],
-            'options': json.loads(row['options'])
+            'options': options
         }
     return None
+
+
+def push_question_history(qid):
+    """将题目 ID 推入浏览历史栈（session 级别）。"""
+    if 'question_history' not in session:
+        session['question_history'] = []
+    history = list(session['question_history'])
+    # 避免连续重复
+    if not history or history[-1] != qid:
+        history.append(qid)
+    # 限制最大长度 100
+    if len(history) > 100:
+        history = history[-100:]
+    session['question_history'] = history
+
+
+def pop_question_history():
+    """弹出上一个题目 ID，用于「上一题」功能。"""
+    history = list(session.get('question_history', []))
+    if len(history) >= 2:
+        history.pop()          # 移除当前题
+        prev_qid = history.pop()  # 上一题
+        session['question_history'] = history
+        return prev_qid
+    return None
+
+
+def has_previous_question():
+    """检查是否有上一题可回看。"""
+    history = session.get('question_history', [])
+    return len(history) >= 2
+
 
 def random_question_id(user_id):
     """
@@ -409,9 +460,10 @@ def index():
     current_seq_qid = user_data['current_seq_qid'] if user_data and user_data['current_seq_qid'] else None
     conn.close()
     
-    return render_template('index.html', 
+    return render_template('index.html',
                           current_year=datetime.now().year,
-                          current_seq_qid=current_seq_qid)
+                          current_seq_qid=current_seq_qid,
+                          active_bank=get_active_bank())
 
 @app.route('/reset_history', methods=['POST'])
 @login_required
@@ -459,11 +511,12 @@ def random_question():
         return render_template('question.html', question=None, answered=answered, total=total)
         
     q = fetch_question(qid)
+    push_question_history(qid)
     is_fav = is_favorite(user_id, qid)
-    
-    return render_template('question.html', 
-                          question=q, 
-                          answered=answered, 
+
+    return render_template('question.html',
+                          question=q,
+                          answered=answered,
                           total=total,
                           is_favorite=is_fav)
 
@@ -512,6 +565,7 @@ def show_question(qid):
         return render_template('question.html',
                               question=q,
                               result_msg=result_msg,
+                              user_answer=user_answer_str,
                               answered=answered,
                               total=total,
                               is_favorite=is_fav)
@@ -524,12 +578,43 @@ def show_question(qid):
     conn.close()
     
     is_fav = is_favorite(user_id, qid)
+    push_question_history(qid)
 
     return render_template('question.html',
                           question=q,
                           answered=answered,
                           total=total,
                           is_favorite=is_fav)
+
+@app.route('/question/<qid>/review')
+@login_required
+def review_question(qid):
+    """只读查看模式：显示题目、用户答案、正确答案。"""
+    user_id = get_user_id()
+    user_answer = None
+
+    # 从 history 表获取用户对该题的最后一次答案
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''SELECT user_answer FROM history
+                 WHERE user_id=? AND question_id=?
+                 ORDER BY timestamp DESC LIMIT 1''',
+              (user_id, qid))
+    row = c.fetchone()
+    if row:
+        user_answer = row['user_answer']
+    conn.close()
+
+    q = fetch_question(qid)
+    if q is None:
+        flash("题目不存在", "error")
+        return redirect(url_for('index'))
+
+    return render_template('question.html',
+                          question=q,
+                          review_mode=True,
+                          user_answer=user_answer or '',
+                          has_prev=has_previous_question())
 
 @app.route('/history')
 @login_required
@@ -620,10 +705,11 @@ def only_wrong_mode():
     
     qid = random.choice(wrong_ids)
     q = fetch_question(qid)
+    push_question_history(qid)
     is_fav = is_favorite(user_id, qid)
-    
-    return render_template('question.html', 
-                          question=q, 
+
+    return render_template('question.html',
+                          question=q,
                           is_favorite=is_fav)
 
 ##############################
@@ -1030,7 +1116,11 @@ def show_sequential_question(qid):
     conn.close()
     
     is_fav = is_favorite(user_id, qid)
-    
+
+    # GET 请求时记录浏览历史（POST 时不重复记录）
+    if request.method == 'GET':
+        push_question_history(qid)
+
     return render_template('question.html',
                           question=q,
                           result_msg=result_msg,
@@ -1049,7 +1139,8 @@ def show_sequential_question(qid):
 @login_required
 def modes():
     """Route to select quiz mode."""
-    return render_template('index.html', mode_select=True, current_year=datetime.now().year)
+    return render_template('index.html', mode_select=True, current_year=datetime.now().year,
+                          active_bank=get_active_bank())
 
 @app.route('/start_timed_mode', methods=['POST'])
 @login_required
@@ -1467,6 +1558,108 @@ def download_apk(filename):
     except Exception as e:
         print(f"Error in download_apk: {e}")
         abort(404)
+
+##############################
+# Bank Management Routes #
+##############################
+
+@app.route('/admin/banks')
+@login_required
+def manage_banks():
+    """Admin page: view and switch question banks."""
+    banks = get_all_banks()
+    active = get_active_bank()
+
+    # Count actual questions in DB
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT COUNT(*) as cnt FROM questions')
+    db_count = c.fetchone()['cnt']
+    conn.close()
+
+    return render_template('manage_banks.html',
+                          banks=banks,
+                          active_bank=active,
+                          db_count=db_count)
+
+
+@app.route('/admin/banks/switch', methods=['POST'])
+@login_required
+def switch_bank():
+    """Switch to a different question bank."""
+    bank_id = request.form.get('bank_id')
+    if not bank_id:
+        flash("未指定题库", "error")
+        return redirect(url_for('manage_banks'))
+
+    try:
+        new_bank = switch_bank(bank_id)
+    except ValueError as e:
+        flash(str(e), "error")
+        return redirect(url_for('manage_banks'))
+
+    # Clear old questions and related data
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('DELETE FROM questions')
+    c.execute('DELETE FROM history')
+    c.execute('DELETE FROM favorites')
+    c.execute('DELETE FROM exam_sessions')
+    c.execute('UPDATE users SET current_seq_qid = NULL')
+    conn.commit()
+
+    # Load new questions
+    load_questions_to_db(conn, csv_file=new_bank['csv_file'])
+
+    # Count imported
+    c.execute('SELECT COUNT(*) as cnt FROM questions')
+    imported_count = c.fetchone()['cnt']
+    conn.close()
+
+    flash(f"已切换到题库: {new_bank['name']}，导入了 {imported_count} 道题目", "success")
+    return redirect(url_for('manage_banks'))
+
+
+@app.route('/admin/banks/reload', methods=['POST'])
+@login_required
+def reload_bank():
+    """Reload the current active bank (re-imports CSV)."""
+    active = get_active_bank()
+
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('DELETE FROM questions')
+    c.execute('DELETE FROM history')
+    c.execute('DELETE FROM favorites')
+    c.execute('DELETE FROM exam_sessions')
+    c.execute('UPDATE users SET current_seq_qid = NULL')
+    conn.commit()
+
+    load_questions_to_db(conn, csv_file=active['csv_file'])
+
+    c.execute('SELECT COUNT(*) as cnt FROM questions')
+    imported_count = c.fetchone()['cnt']
+    conn.close()
+
+    flash(f"已重新导入题库: {active['name']}，共 {imported_count} 道题目", "success")
+    return redirect(url_for('manage_banks'))
+
+
+@app.route('/api/active_bank')
+def api_active_bank():
+    """Return the active bank info as JSON."""
+    active = get_active_bank()
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT COUNT(*) as cnt FROM questions')
+    db_count = c.fetchone()['cnt']
+    conn.close()
+    return jsonify({
+        'id': active['id'],
+        'name': active['name'],
+        'db_count': db_count,
+        'csv_file': active['csv_file']
+    })
 
 ##############################
 # Error Handlers #

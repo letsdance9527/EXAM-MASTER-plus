@@ -57,7 +57,14 @@
     
     <!-- 题干内容 -->
     <div class="question-stem">{{ question.stem }}</div>
-    
+
+    <!-- 回顾模式提示 -->
+    {% if review_mode %}
+        <div class="result-message result-info" style="background: rgba(76, 201, 240, 0.1); border-left: 4px solid var(--info-color); padding: 1rem; border-radius: var(--border-radius); margin-bottom: 1rem;">
+            <i class="fas fa-history"></i> 正在查看之前的题目（只读模式）
+        </div>
+    {% endif %}
+
     <!-- 答题结果消息 -->
     {% if result_msg %}
         <div class="result-message {% if '正确' in result_msg %}result-correct{% else %}result-incorrect{% endif %}">
@@ -76,22 +83,29 @@
             {% for opt_key, opt_val in question.options.items() %}
                 {% set checked = user_answer is defined and (opt_key in user_answer) %}
                 <li class="option-item">
-                    <label class="option-label {% if checked and result_msg %}{% if opt_key in question.answer %}option-correct{% else %}option-incorrect{% endif %}{% endif %}">
-                        {% if question.type == '单选题' %}
-                            <input type="radio" 
-                                   class="option-checkbox" 
+                    <label class="option-label
+                        {% if result_msg or review_mode %}
+                            {% if opt_key in question.answer %}option-correct{% endif %}
+                            {% if checked and opt_key not in question.answer %}option-incorrect{% endif %}
+                        {% endif %}
+                        {% if checked and not result_msg and not review_mode %}option-selected{% endif %}
+                        {% if question.type == '判断题' %}tf-option{% endif %}
+                    ">
+                        {% if question.type == '单选题' or question.type == '判断题' %}
+                            <input type="radio"
+                                   class="option-checkbox"
                                    name="answer"
                                    value="{{ opt_key }}"
                                    {% if checked %}checked{% endif %}
-                                   {% if result_msg %}disabled{% endif %}
-                                   required>
+                                   {% if result_msg or review_mode %}disabled{% endif %}
+                                   {% if not review_mode %}required{% endif %}>
                         {% else %}
-                            <input type="checkbox" 
-                                   class="option-checkbox" 
+                            <input type="checkbox"
+                                   class="option-checkbox"
                                    name="answer"
                                    value="{{ opt_key }}"
                                    {% if checked %}checked{% endif %}
-                                   {% if result_msg %}disabled{% endif %}>
+                                   {% if result_msg or review_mode %}disabled{% endif %}>
                         {% endif %}
                         <span class="option-text"><strong>{{ opt_key }}.</strong> {{ opt_val }}</span>
                     </label>
@@ -101,19 +115,43 @@
         
         <!-- 底部操作按钮 -->
         <div class="question-actions">
-            {% if not result_msg %}
+            {% if review_mode %}
+                <!-- 回顾模式：只显示继续答题按钮 -->
+                <div class="btn-group">
+                    <a href="{{ url_for('index') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-home"></i> 返回首页
+                    </a>
+                    <a href="{{ url_for('random_question') }}" class="btn btn-primary">
+                        <i class="fas fa-arrow-right"></i> 继续答题
+                    </a>
+                </div>
+            {% elif not result_msg %}
+                <!-- 未提交：显示提交按钮 + 上一题按钮 -->
                 <div class="btn-group">
                     <button type="submit" class="btn btn-success">
                         <i class="fas fa-paper-plane"></i> 提交答案
                     </button>
+                    {% if session.get('question_history', [])|length >= 2 %}
+                        {% set prev_qid = session['question_history'][-2] %}
+                        <a href="{{ url_for('review_question', qid=prev_qid) }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> 上一题
+                        </a>
+                    {% endif %}
                 </div>
             {% else %}
+                <!-- 已提交：显示导航按钮 + 上一题按钮 -->
                 {% if sequential_mode %}
                     {% if next_qid %}
                         <div class="btn-group">
                             <a href="{{ url_for('show_sequential_question', qid=next_qid) }}" class="btn btn-primary">
                                 <i class="fas fa-arrow-right"></i> 下一题
                             </a>
+                            {% if session.get('question_history', [])|length >= 3 %}
+                                {% set prev_qid = session['question_history'][-3] %}
+                                <a href="{{ url_for('review_question', qid=prev_qid) }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left"></i> 上一题
+                                </a>
+                            {% endif %}
                         </div>
                     {% else %}
                         <div class="alert alert-success">
@@ -139,6 +177,12 @@
                         <a href="{{ url_for('index') }}" class="btn btn-outline-primary">
                             <i class="fas fa-home"></i> 返回首页
                         </a>
+                        {% if session.get('question_history', [])|length >= 3 %}
+                            {% set prev_qid = session['question_history'][-3] %}
+                            <a href="{{ url_for('review_question', qid=prev_qid) }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> 上一题
+                            </a>
+                        {% endif %}
                     </div>
                 {% endif %}
             {% endif %}
@@ -171,16 +215,6 @@
 {% endif %}
 
 <style>
-    .option-label.option-correct {
-        background-color: rgba(46, 196, 182, 0.1);
-        border-color: var(--success-color);
-    }
-    
-    .option-label.option-incorrect {
-        background-color: rgba(230, 57, 70, 0.1);
-        border-color: var(--danger-color);
-    }
-    
     .question-info {
         display: flex;
         align-items: center;

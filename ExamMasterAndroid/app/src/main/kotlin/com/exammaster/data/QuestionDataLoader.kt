@@ -12,7 +12,7 @@ object QuestionDataLoader {
         val questions = mutableListOf<Question>()
         
         try {
-            val inputStream = context.assets.open("questions.csv")
+            val inputStream = context.assets.open("移动通信_题库导出.csv")
             val reader = BufferedReader(InputStreamReader(inputStream, "UTF-8"))
             
             // Skip header line

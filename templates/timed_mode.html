@@ -37,7 +37,7 @@
                 {% for opt_key, opt_val in question.options.items() %}
                 <div class="option-item">
                     <label class="option-label">
-                        {% if question.type == '单选题' %}
+                        {% if question.type == '单选题' or question.type == '判断题' %}
                             <input type="radio" name="answer_{{ question.id }}" value="{{ opt_key }}" class="option-checkbox" required>
                         {% else %}
                             <input type="checkbox" name="answer_{{ question.id }}" value="{{ opt_key }}" class="option-checkbox">

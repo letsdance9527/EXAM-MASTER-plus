@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block title %}题库管理 - ExamMaster{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="mb-0"><i class="fas fa-cog"></i> 题库管理</h2>
+        </div>
+        <div class="card-body">
+            <div class="current-bank-info mb-4">
+                <div class="alert alert-info">
+                    <strong><i class="fas fa-bookmark"></i> 当前题库:</strong>
+                    <span class="badge badge-primary ml-2">{{ active_bank.name }}</span>
+                    <span class="text-muted ml-2">(数据库中 {{ db_count }} 道题目)</span>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>题库名称</th>
+                            <th>描述</th>
+                            <th>预计题数</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for bank in banks %}
+                        <tr class="{% if bank.id == active_bank.id %}table-active{% endif %}">
+                            <td>
+                                <strong>{{ bank.name }}</strong>
+                                {% if bank.id == active_bank.id %}
+                                <span class="badge badge-success ml-1">当前</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ bank.description }}</td>
+                            <td>{{ bank.question_count }}</td>
+                            <td>
+                                {% if bank.id == active_bank.id %}
+                                <span class="text-success"><i class="fas fa-check-circle"></i> 使用中</span>
+                                {% else %}
+                                <span class="text-muted">未激活</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if bank.id != active_bank.id %}
+                                <form method="POST" action="{{ url_for('switch_bank') }}" style="display:inline;"
+                                      onsubmit="return confirmSwitch('{{ bank.name }}');">
+                                    <input type="hidden" name="bank_id" value="{{ bank.id }}">
+                                    <button type="submit" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-exchange-alt"></i> 切换到此题库
+                                    </button>
+                                </form>
+                                {% else %}
+                                <form method="POST" action="{{ url_for('reload_bank') }}" style="display:inline;"
+                                      onsubmit="return confirmReload();">
+                                    <button type="submit" class="btn btn-outline-warning btn-sm">
+                                        <i class="fas fa-sync-alt"></i> 重新导入
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="alert alert-warning mt-4">
+                <h5><i class="fas fa-exclamation-triangle"></i> 注意事项</h5>
+                <ul class="mb-0">
+                    <li><strong>切换题库</strong>将会<strong>清除</strong>所有答题历史、收藏、考试记录和学习进度。</li>
+                    <li><strong>重新导入</strong>会清空当前题库数据并从CSV文件重新加载。</li>
+                    <li>这些操作<strong>不可撤销</strong>，请谨慎操作。</li>
+                    <li>用户账号不会被清除。</li>
+                </ul>
+            </div>
+
+            <div class="text-muted mt-3">
+                <small>
+                    <i class="fas fa-info-circle"></i>
+                    题库配置文件: <code>bank_config.json</code> — 可以通过编辑此文件添加或修改题库。
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-3">
+        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> 返回首页
+        </a>
+    </div>
+</div>
+
+<script>
+function confirmSwitch(bankName) {
+    return confirm(`确定要切换到题库 "${bankName}" 吗？\n\n⚠️ 此操作将清除所有答题历史、收藏和考试记录，且不可撤销！`);
+}
+
+function confirmReload() {
+    return confirm("确定要重新导入当前题库吗？\n\n⚠️ 此操作将清除所有答题历史、收藏和考试记录，且不可撤销！");
+}
+</script>
+{% endblock %}

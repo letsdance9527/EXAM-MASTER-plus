@@ -553,16 +553,51 @@ input[type="radio"] {
   background-color: var(--gray-200);
 }
 
-/* 选中状态增强 */
+/* 选中状态增强 — 文本加重 */
 .option-item input:checked + .option-text {
   font-weight: 500;
   color: var(--primary-color);
 }
 
-.option-item input:checked ~ .option-label {
+/* 选中状态增强 — label 边框（模板通过 option-selected class 触发） */
+.option-label.option-selected {
   background-color: rgba(67, 97, 238, 0.05);
   border-color: var(--primary-color);
   box-shadow: 0 0 0 1px var(--primary-color);
+}
+
+/* 正确答案标记 */
+.option-label.option-correct {
+  background-color: rgba(46, 196, 182, 0.12);
+  border: 2px solid var(--success-color);
+}
+
+/* 错误答案标记 */
+.option-label.option-incorrect {
+  background-color: rgba(230, 57, 70, 0.15);
+  border: 2px solid var(--danger-color);
+}
+
+/* 判断题选项 — 更大更醒目的正确/错误按钮 */
+.option-label.tf-option {
+  padding: 1.25rem 1rem;
+  font-size: 1.1rem;
+  justify-content: center;
+}
+
+.option-label.tf-option .option-text strong {
+  font-size: 1.3rem;
+  margin-right: 0.5rem;
+}
+
+.option-label.tf-option.option-correct {
+  background-color: rgba(46, 196, 182, 0.15);
+  border-color: #1a8a7e;
+}
+
+.option-label.tf-option.option-incorrect {
+  background-color: rgba(230, 57, 70, 0.18);
+  border-color: #c62828;
 }
 
 .option-checkbox {

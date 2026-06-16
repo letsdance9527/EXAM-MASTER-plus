@@ -1,0 +1,33 @@
+{
+  "active_bank": "5g_telecom",
+  "banks": [
+    {
+      "id": "5g_telecom",
+      "name": "5G与移动通信(2025)",
+      "csv_file": "移动通信_题库导出.csv",
+      "question_count": 415,
+      "description": "5G/电信技术题库"
+    },
+    {
+      "id": "maogai_2023",
+      "name": "毛概2023级(2025-05)",
+      "csv_file": "tools/questions.csv",
+      "question_count": 881,
+      "description": "毛泽东思想概论2023级"
+    },
+    {
+      "id": "gongtongt_2025",
+      "name": "共同体概论2025",
+      "csv_file": "tools/questions_202505共同体概论.csv",
+      "question_count": 296,
+      "description": "中华民族共同体概论"
+    },
+    {
+      "id": "maogai_old",
+      "name": "毛概旧题库(2024-12)",
+      "csv_file": "tools/questions_old_202412.csv",
+      "question_count": 747,
+      "description": "毛概2024年12月旧题库"
+    }
+  ]
+}
