@@ -51,43 +51,96 @@ class ExamViewModel(
         prefs.edit().putString("current_seq_qid", qid).apply()
     }
 
-    // 上一题浏览历史栈
+    // 浏览历史 — 支持回看本次已答的所有题目
     private val questionHistory = mutableListOf<String>()
+    // historyIndex: -1 = 非历史模式(当前题), 0..size-1 = 浏览历史中的位置
+    private var historyIndex = -1
     private val _hasPreviousQuestion = MutableStateFlow(false)
     val hasPreviousQuestion: StateFlow<Boolean> = _hasPreviousQuestion.asStateFlow()
+    private val _hasNextQuestion = MutableStateFlow(false)
+    val hasNextQuestion: StateFlow<Boolean> = _hasNextQuestion.asStateFlow()
     private val _reviewMode = MutableStateFlow(false)
     val reviewMode: StateFlow<Boolean> = _reviewMode.asStateFlow()
 
     private fun pushToHistory(qid: String) {
+        // 如果在浏览历史中，放弃当前位置之后的历史
+        if (historyIndex >= 0 && historyIndex < questionHistory.size - 1) {
+            while (questionHistory.size > historyIndex + 1) {
+                questionHistory.removeAt(questionHistory.lastIndex)
+            }
+        }
+        historyIndex = -1
         if (questionHistory.isEmpty() || questionHistory.last() != qid) {
             questionHistory.add(qid)
-            if (questionHistory.size > 100) {
+            if (questionHistory.size > 200) {
                 questionHistory.removeAt(0)
             }
         }
-        _hasPreviousQuestion.value = questionHistory.size >= 2
+        updateHistoryButtons()
+    }
+
+    private fun updateHistoryButtons() {
+        if (historyIndex < 0) {
+            // 在当前题：有上一题当历史栈 >= 2
+            _hasPreviousQuestion.value = questionHistory.size >= 2
+            _hasNextQuestion.value = false
+        } else {
+            _hasPreviousQuestion.value = historyIndex > 0
+            _hasNextQuestion.value = historyIndex < questionHistory.size - 1
+        }
     }
 
     fun goToPreviousQuestion() {
-        if (questionHistory.size < 2) return
         viewModelScope.launch {
-            questionHistory.removeAt(questionHistory.lastIndex) // 去掉当前题
-            val prevQid = questionHistory.removeAt(questionHistory.lastIndex) // 上一题
-            _hasPreviousQuestion.value = questionHistory.size >= 2
-            val question = repository.getQuestionById(prevQid)
+            val targetIdx = if (historyIndex < 0) {
+                // 从当前题进入历史：跳到倒数第二个（倒数第一个是当前题）
+                if (questionHistory.size < 2) return@launch
+                questionHistory.size - 2
+            } else {
+                if (historyIndex <= 0) return@launch
+                historyIndex - 1
+            }
+            historyIndex = targetIdx
+            val qid = questionHistory[historyIndex]
+            val question = repository.getQuestionById(qid)
             if (question != null) {
                 _currentQuestion.value = question
                 _reviewMode.value = true
                 _showResult.value = false
                 _selectedAnswers.value = emptySet()
             }
+            updateHistoryButtons()
+        }
+    }
+
+    fun goToNextQuestion() {
+        viewModelScope.launch {
+            if (historyIndex < 0) return@launch
+            val targetIdx = historyIndex + 1
+            if (targetIdx >= questionHistory.size) return@launch
+            historyIndex = targetIdx
+            val qid = questionHistory[historyIndex]
+            val question = repository.getQuestionById(qid)
+            if (question != null) {
+                _currentQuestion.value = question
+                _reviewMode.value = true
+                _showResult.value = false
+                _selectedAnswers.value = emptySet()
+            }
+            // 回到了最新题？退出历史模式
+            if (historyIndex >= questionHistory.size - 1) {
+                exitReviewMode()
+            }
+            updateHistoryButtons()
         }
     }
 
     fun exitReviewMode() {
+        historyIndex = -1
         _reviewMode.value = false
         _selectedAnswers.value = emptySet()
         _showResult.value = false
+        updateHistoryButtons()
     }
 
     // 题库管理

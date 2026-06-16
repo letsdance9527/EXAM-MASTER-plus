@@ -29,6 +29,7 @@ fun QuestionScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     val reviewMode by viewModel.reviewMode.collectAsState()
     val hasPreviousQuestion by viewModel.hasPreviousQuestion.collectAsState()
+    val hasNextQuestion by viewModel.hasNextQuestion.collectAsState()
     
     // Check if current question is favorited
     val isFavorite = remember(currentQuestion?.id) { mutableStateOf(false) }
@@ -211,18 +212,29 @@ fun QuestionScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     if (reviewMode) {
-                        // Review mode: Continue button
-                        OutlinedButton(
-                            onClick = { navController.popBackStack() },
-                            modifier = Modifier.weight(1f)
-                        ) { Text("返回首页") }
-                        Button(
-                            onClick = {
-                                viewModel.exitReviewMode()
-                                viewModel.nextQuestion()
-                            },
-                            modifier = Modifier.weight(1f)
-                        ) { Text("继续答题") }
+                        // Review mode: history navigation
+                        if (hasPreviousQuestion) {
+                            OutlinedButton(
+                                onClick = { viewModel.goToPreviousQuestion() },
+                                modifier = Modifier.weight(1f)
+                            ) { Text("上一题") }
+                        }
+                        if (hasNextQuestion) {
+                            OutlinedButton(
+                                onClick = { viewModel.goToNextQuestion() },
+                                modifier = Modifier.weight(1f)
+                            ) { Text("下一题") }
+                        }
+                        if (!hasNextQuestion) {
+                            // 已经是历史中最后一题 = 当前题位置
+                            Button(
+                                onClick = {
+                                    viewModel.exitReviewMode()
+                                    viewModel.nextQuestion()
+                                },
+                                modifier = Modifier.weight(1f)
+                            ) { Text("继续答题") }
+                        }
                     } else if (!showResult) {
                         // Before submission: Submit + Previous
                         Button(
