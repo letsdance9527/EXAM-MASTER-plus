@@ -171,18 +171,6 @@ fun HomeScreen(
         ) {
             item {
                 ModeButton(
-                    title = "随机答题",
-                    subtitle = "从题库中随机抽取题目练习",
-                    icon = Icons.Default.Shuffle,
-                    onClick = {
-                        viewModel.loadRandomQuestion()
-                        navController.navigate(Screen.Question.route)
-                    }
-                )
-            }
-
-            item {
-                ModeButton(
                     title = "浏览题目",
                     subtitle = "查看所有题目内容",
                     icon = Icons.Default.LibraryBooks,
@@ -191,7 +179,7 @@ fun HomeScreen(
                     }
                 )
             }
-            
+
             item {
                 ModeButton(
                     title = "顺序答题",
@@ -203,7 +191,19 @@ fun HomeScreen(
                     }
                 )
             }
-            
+
+            item {
+                ModeButton(
+                    title = "随机答题",
+                    subtitle = "从题库中随机抽取题目练习",
+                    icon = Icons.Default.Shuffle,
+                    onClick = {
+                        viewModel.loadRandomQuestion()
+                        navController.navigate(Screen.Question.route)
+                    }
+                )
+            }
+
             item {
                 ModeButton(
                     title = "错题练习",
