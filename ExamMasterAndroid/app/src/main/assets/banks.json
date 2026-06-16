@@ -1,0 +1,17 @@
+{
+  "current_bank": "5g_telecom",
+  "banks": [
+    {
+      "id": "5g_telecom",
+      "name": "5G与移动通信(2025)",
+      "csv_file": "移动通信_题库导出.csv",
+      "question_count": 415
+    },
+    {
+      "id": "maogai_2023",
+      "name": "毛概2023级(2025-05)",
+      "csv_file": "questions.csv",
+      "question_count": 881
+    }
+  ]
+}

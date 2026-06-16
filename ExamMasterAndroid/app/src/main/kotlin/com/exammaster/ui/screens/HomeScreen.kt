@@ -24,6 +24,9 @@ fun HomeScreen(
 ) {
     val statistics by viewModel.statistics.collectAsState()
     val lastBrowsedId by viewModel.lastBrowsedQuestionId.collectAsState()
+    val currentBank by viewModel.currentBank.collectAsState()
+    val availableBanks by viewModel.availableBanks.collectAsState()
+    var showBankDialog by remember { mutableStateOf(false) }
     
     Column(
         modifier = Modifier
@@ -42,6 +45,69 @@ fun HomeScreen(
                 .padding(bottom = 32.dp)
         )
         
+        // Current Bank Badge
+        TextButton(
+            onClick = { showBankDialog = true },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(
+                Icons.Default.Bookmark,
+                contentDescription = null,
+                modifier = Modifier.size(16.dp)
+            )
+            Spacer(Modifier.width(4.dp))
+            Text("当前题库: ${currentBank.name}", fontSize = 14.sp)
+            Spacer(Modifier.width(4.dp))
+            Icon(
+                Icons.Default.ArrowDropDown,
+                contentDescription = "切换题库",
+                modifier = Modifier.size(16.dp)
+            )
+        }
+
+        // Bank Switch Dialog
+        if (showBankDialog) {
+            AlertDialog(
+                onDismissRequest = { showBankDialog = false },
+                title = { Text("切换题库") },
+                text = {
+                    Column {
+                        Text("选择后将清除所有答题记录并重新导入题库。")
+                        Spacer(Modifier.height(12.dp))
+                        availableBanks.forEach { bank ->
+                            val isActive = bank.id == currentBank.id
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                RadioButton(
+                                    selected = isActive,
+                                    onClick = {
+                                        if (!isActive) {
+                                            viewModel.switchBank(bank.id)
+                                            showBankDialog = false
+                                        }
+                                    }
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Column {
+                                    Text(bank.name, fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal)
+                                    Text("${bank.question_count} 道题目", style = MaterialTheme.typography.bodySmall)
+                                }
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showBankDialog = false }) {
+                        Text("关闭")
+                    }
+                }
+            )
+        }
+
         // Statistics Card
         Card(
             modifier = Modifier
@@ -132,7 +198,7 @@ fun HomeScreen(
                     subtitle = "重新练习答错的题目",
                     icon = Icons.Default.Report,
                     onClick = {
-                        // TODO: Implement wrong questions mode
+                        viewModel.startWrongQuestionsMode()
                         navController.navigate(Screen.Question.route)
                     }
                 )

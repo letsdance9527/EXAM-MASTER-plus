@@ -4,6 +4,8 @@ import android.app.Application
 import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.exammaster.data.Bank
+import com.exammaster.data.QuestionDataLoader
 import com.exammaster.data.repository.ExamRepository
 import com.exammaster.data.database.entities.*
 import kotlinx.coroutines.flow.*
@@ -47,6 +49,75 @@ class ExamViewModel(
     private fun savePosition(qid: String?) {
         _lastBrowsedQuestionId.value = qid
         prefs.edit().putString("current_seq_qid", qid).apply()
+    }
+
+    // 上一题浏览历史栈
+    private val questionHistory = mutableListOf<String>()
+    private val _hasPreviousQuestion = MutableStateFlow(false)
+    val hasPreviousQuestion: StateFlow<Boolean> = _hasPreviousQuestion.asStateFlow()
+    private val _reviewMode = MutableStateFlow(false)
+    val reviewMode: StateFlow<Boolean> = _reviewMode.asStateFlow()
+
+    private fun pushToHistory(qid: String) {
+        if (questionHistory.isEmpty() || questionHistory.last() != qid) {
+            questionHistory.add(qid)
+            if (questionHistory.size > 100) {
+                questionHistory.removeAt(0)
+            }
+        }
+        _hasPreviousQuestion.value = questionHistory.size >= 2
+    }
+
+    fun goToPreviousQuestion() {
+        if (questionHistory.size < 2) return
+        viewModelScope.launch {
+            questionHistory.removeAt(questionHistory.lastIndex) // 去掉当前题
+            val prevQid = questionHistory.removeAt(questionHistory.lastIndex) // 上一题
+            _hasPreviousQuestion.value = questionHistory.size >= 2
+            val question = repository.getQuestionById(prevQid)
+            if (question != null) {
+                _currentQuestion.value = question
+                _reviewMode.value = true
+                _showResult.value = false
+                _selectedAnswers.value = emptySet()
+            }
+        }
+    }
+
+    fun exitReviewMode() {
+        _reviewMode.value = false
+        _selectedAnswers.value = emptySet()
+        _showResult.value = false
+    }
+
+    // 题库管理
+    private val _currentBank = MutableStateFlow(Bank.getActiveBank(getApplication()))
+    val currentBank: StateFlow<Bank> = _currentBank.asStateFlow()
+
+    private val _availableBanks = MutableStateFlow(
+        Bank.loadFromAssets(getApplication()).banks
+    )
+    val availableBanks: StateFlow<List<Bank>> = _availableBanks.asStateFlow()
+
+    fun switchBank(bankId: String) {
+        viewModelScope.launch {
+            val bank = Bank.switchBank(getApplication(), bankId) ?: return@launch
+            _currentBank.value = bank
+            _isLoading.value = true
+            // Clear DB and re-import from new bank
+            repository.clearAllUserData()
+            repository.deleteAllQuestions()
+            val questions = QuestionDataLoader.loadQuestionsFromAssets(getApplication(), bankId)
+            if (questions.isNotEmpty()) {
+                repository.insertQuestions(questions)
+            }
+            savePosition(null)
+            _currentQuestion.value = null
+            _selectedAnswers.value = emptySet()
+            _showResult.value = false
+            loadStatistics()
+            _isLoading.value = false
+        }
     }
     
     val allQuestions = repository.getAllQuestions().stateIn(
@@ -168,8 +239,41 @@ class ExamViewModel(
         when (_currentMode.value) {
             QuizMode.RANDOM -> loadRandomQuestion()
             QuizMode.SEQUENTIAL -> loadSequentialQuestion()
+            QuizMode.WRONG_ONLY -> loadWrongQuestion()
             else -> loadRandomQuestion()
         }
+    }
+
+    // 错题练习
+    fun startWrongQuestionsMode() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _currentMode.value = QuizMode.WRONG_ONLY
+            loadWrongQuestion()
+            _isLoading.value = false
+        }
+    }
+
+    private suspend fun loadWrongQuestion() {
+        val wrongQuestions = repository.getWrongQuestions()
+        if (wrongQuestions.isEmpty()) {
+            _currentQuestion.value = null
+            return
+        }
+        // 随机选一道未完成的错题
+        val answeredIds = repository.getAnsweredQuestionIds()
+        val unanswered = wrongQuestions.filter { it.id !in answeredIds }
+        val question = if (unanswered.isNotEmpty()) {
+            unanswered.random()
+        } else {
+            wrongQuestions.random()
+        }
+        _currentQuestion.value = question
+        _selectedAnswers.value = emptySet()
+        _showResult.value = false
+        _reviewMode.value = false
+        savePosition(question.id)
+        pushToHistory(question.id)
     }
     
     fun toggleFavorite() {

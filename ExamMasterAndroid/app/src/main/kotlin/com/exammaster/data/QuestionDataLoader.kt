@@ -8,11 +8,17 @@ import java.io.InputStreamReader
 
 object QuestionDataLoader {
     
-    fun loadQuestionsFromAssets(context: Context): List<Question> {
+    fun loadQuestionsFromAssets(context: Context, bankId: String? = null): List<Question> {
         val questions = mutableListOf<Question>()
-        
+
         try {
-            val inputStream = context.assets.open("移动通信_题库导出.csv")
+            val bank = if (bankId != null) {
+                Bank.getBankById(context, bankId)
+            } else {
+                Bank.getActiveBank(context)
+            }
+            val csvFile = bank?.csv_file ?: "移动通信_题库导出.csv"
+            val inputStream = context.assets.open(csvFile)
             val reader = BufferedReader(InputStreamReader(inputStream, "UTF-8"))
             
             // Skip header line

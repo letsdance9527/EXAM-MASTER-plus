@@ -27,6 +27,8 @@ fun QuestionScreen(
     val showResult by viewModel.showResult.collectAsState()
     val isAnswerCorrect by viewModel.isAnswerCorrect.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val reviewMode by viewModel.reviewMode.collectAsState()
+    val hasPreviousQuestion by viewModel.hasPreviousQuestion.collectAsState()
     
     // Check if current question is favorited
     val isFavorite = remember(currentQuestion?.id) { mutableStateOf(false) }
@@ -120,13 +122,37 @@ fun QuestionScreen(
                     }
                 }
                 
+                // Review mode banner
+                if (reviewMode) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer
+                        )
+                    ) {
+                        Row(modifier = Modifier.padding(12.dp)) {
+                            Icon(Icons.Default.History, contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text("正在查看之前的题目（只读模式）")
+                        }
+                    }
+                }
+
                 // Options
+                val correctAnswer = question.answer
                 question.getFormattedOptions().forEach { (key, value) ->
+                    val isSelected = selectedAnswers.contains(key) || (reviewMode && correctAnswer.contains(key) && selectedAnswers.isEmpty())
+                    // Wait, for review mode we need the user's actual answer. But the ViewModel doesn't track it per-question.
+                    // Instead, we show correct answer always in review mode
                     OptionItem(
                         option = key,
                         text = value,
                         isSelected = selectedAnswers.contains(key),
-                        isEnabled = !showResult,
+                        isEnabled = !showResult && !reviewMode,
+                        isCorrectOption = (showResult || reviewMode) && key in correctAnswer,
+                        isWrongSelection = (showResult || reviewMode) && selectedAnswers.contains(key) && key !in correctAnswer,
                         onSelect = { viewModel.selectAnswer(key) }
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -184,30 +210,51 @@ fun QuestionScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    if (!showResult) {
+                    if (reviewMode) {
+                        // Review mode: Continue button
+                        OutlinedButton(
+                            onClick = { navController.popBackStack() },
+                            modifier = Modifier.weight(1f)
+                        ) { Text("返回首页") }
+                        Button(
+                            onClick = {
+                                viewModel.exitReviewMode()
+                                viewModel.nextQuestion()
+                            },
+                            modifier = Modifier.weight(1f)
+                        ) { Text("继续答题") }
+                    } else if (!showResult) {
+                        // Before submission: Submit + Previous
                         Button(
                             onClick = { viewModel.submitAnswer() },
                             modifier = Modifier.weight(1f),
                             enabled = selectedAnswers.isNotEmpty()
-                        ) {
-                            Text("提交答案")
+                        ) { Text("提交答案") }
+                        if (hasPreviousQuestion) {
+                            OutlinedButton(
+                                onClick = { viewModel.goToPreviousQuestion() },
+                                modifier = Modifier.weight(1f)
+                            ) { Text("上一题") }
                         }
                     } else {
+                        // After submission: Next + Previous
                         Button(
                             onClick = { viewModel.nextQuestion() },
                             modifier = Modifier.weight(1f)
-                        ) {
-                            Text("下一题")
+                        ) { Text("下一题") }
+                        if (hasPreviousQuestion) {
+                            OutlinedButton(
+                                onClick = { viewModel.goToPreviousQuestion() },
+                                modifier = Modifier.weight(1f)
+                            ) { Text("上一题") }
                         }
                     }
-                    
-                    OutlinedButton(
-                        onClick = { 
-                            viewModel.loadSequentialQuestion()
-                        },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("顺序题目")
+
+                    if (!reviewMode) {
+                        OutlinedButton(
+                            onClick = { viewModel.loadSequentialQuestion() },
+                            modifier = Modifier.weight(1f)
+                        ) { Text("顺序题目") }
                     }
                 }
             }
@@ -221,8 +268,22 @@ private fun OptionItem(
     text: String,
     isSelected: Boolean,
     isEnabled: Boolean,
-    onSelect: () -> Unit
+    onSelect: () -> Unit,
+    isCorrectOption: Boolean = false,
+    isWrongSelection: Boolean = false
 ) {
+    val containerColor = when {
+        isWrongSelection -> MaterialTheme.colorScheme.errorContainer
+        isCorrectOption -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+        isSelected -> MaterialTheme.colorScheme.primaryContainer
+        else -> MaterialTheme.colorScheme.surface
+    }
+    val border = when {
+        isWrongSelection -> androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.error)
+        isCorrectOption -> androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+        isSelected -> androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+        else -> null
+    }
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -231,15 +292,8 @@ private fun OptionItem(
                 enabled = isEnabled,
                 onClick = onSelect
             ),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) 
-                MaterialTheme.colorScheme.primaryContainer
-            else 
-                MaterialTheme.colorScheme.surface
-        ),
-        border = if (isSelected) 
-            androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
-        else null
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        border = border
     ) {
         Row(
             modifier = Modifier

@@ -298,6 +298,45 @@ fun AboutScreen(
             }
         }
         
+        // Clear Data button
+        item {
+            var showClearDialog by remember { mutableStateOf(false) }
+
+            OutlinedButton(
+                onClick = { showClearDialog = true },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.error
+                )
+            ) {
+                Icon(Icons.Default.Delete, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("清除所有数据")
+            }
+
+            if (showClearDialog) {
+                AlertDialog(
+                    onDismissRequest = { showClearDialog = false },
+                    title = { Text("确认清除") },
+                    text = { Text("此操作将清除所有答题历史、收藏和考试记录，且不可撤销。确定要继续吗？") },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                viewModel.clearAllUserData()
+                                showClearDialog = false
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.error
+                            )
+                        ) { Text("确认清除") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showClearDialog = false }) { Text("取消") }
+                    }
+                )
+            }
+        }
+
         item {
             // Footer
             Column(

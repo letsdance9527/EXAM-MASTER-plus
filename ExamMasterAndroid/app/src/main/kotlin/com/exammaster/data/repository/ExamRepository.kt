@@ -40,6 +40,8 @@ class ExamRepository(
     
     suspend fun insertQuestions(questions: List<Question>) = questionDao.insertQuestions(questions)
 
+    suspend fun deleteAllQuestions() = questionDao.deleteAllQuestions()
+
     // History operations
     fun getAllHistory(): Flow<List<History>> = historyDao.getAllHistory()
     
